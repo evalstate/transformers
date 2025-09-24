@@ -330,14 +330,14 @@ class InternVLProcessorTest(ProcessorTesterMixin, unittest.TestCase):
         for idx, url in enumerate(input_data[:batch_size]):
             batch_messages[idx][0]["content"] = [batch_messages[idx][0]["content"][0], {"type": modality, "url": url}]
 
-        num_frames = 2  # by default no more than 2 frames, otherwise too slow
+        num_frames_per_video = 2  # by default no more than 2 frames, otherwise too slow
         out_dict = processor.apply_chat_template(
             batch_messages,
             add_generation_prompt=True,
             tokenize=True,
             return_dict=True,
             return_tensors="pt",
-            num_frames=num_frames,
+            num_frames=num_frames_per_video,
         )
         self.assertTrue(self.videos_input_name in out_dict)
         self.assertEqual(len(out_dict["input_ids"]), batch_size)
@@ -352,7 +352,7 @@ class InternVLProcessorTest(ProcessorTesterMixin, unittest.TestCase):
                     if (content_type := content.get("type")) == "image":
                         num_pixel_planes += 1
                     elif content_type == "video":
-                        num_pixel_planes += num_frames
+                        num_pixel_planes += num_frames_per_video
         self.assertEqual(len(out_dict[self.videos_input_name]), num_pixel_planes)
         for k in out_dict:
             self.assertIsInstance(out_dict[k], torch.Tensor)
