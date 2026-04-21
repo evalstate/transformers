@@ -90,6 +90,7 @@ else:
             ("glmasr", "GlmAsrProcessor"),
             ("got_ocr2", "GotOcr2Processor"),
             ("granite_speech", "GraniteSpeechProcessor"),
+            ("granite4_vision", "Granite4VisionProcessor"),
             ("grounding-dino", "GroundingDinoProcessor"),
             ("groupvit", "CLIPProcessor"),
             ("higgs_audio_v2", "HiggsAudioV2Processor"),
