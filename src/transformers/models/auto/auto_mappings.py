@@ -233,7 +233,6 @@ CONFIG_MAPPING_NAMES = OrderedDict(
         ("gpt_oss", "GptOssConfig"),
         ("gptj", "GPTJConfig"),
         ("granite", "GraniteConfig"),
-        ("granite4_vision", "Granite4VisionConfig"),
         ("granite_speech", "GraniteSpeechConfig"),
         ("granite_speech_encoder", "GraniteSpeechEncoderConfig"),
         ("granitemoe", "GraniteMoeConfig"),
