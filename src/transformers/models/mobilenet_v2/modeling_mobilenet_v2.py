@@ -331,14 +331,6 @@ class MobileNetV2Model(MobileNetV2PreTrainedModel):
         pixel_values: torch.Tensor | None = None,
         **kwargs,
     ) -> tuple | BaseModelOutputWithPoolingAndNoAttention:
-<<<<<<< HEAD
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.return_dict
-
-=======
->>>>>>> pr-44013
         if pixel_values is None:
             raise ValueError("You have to specify pixel_values")
 
@@ -540,14 +532,6 @@ class MobileNetV2ForSemanticSegmentation(MobileNetV2PreTrainedModel):
         >>> # logits are of shape (batch_size, num_labels, height, width)
         >>> logits = outputs.logits
         ```"""
-<<<<<<< HEAD
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.return_dict
-
-=======
->>>>>>> pr-44013
         if labels is not None and self.config.num_labels == 1:
             raise ValueError("The number of labels should be greater than one")
 
