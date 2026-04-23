@@ -176,8 +176,8 @@ if TYPE_CHECKING:
     from .gpt_sw3 import *
     from .gptj import *
     from .granite import *
-    from .granite_speech import *
     from .granite4_vision import *
+    from .granite_speech import *
     from .granitemoe import *
     from .granitemoehybrid import *
     from .granitemoeshared import *
