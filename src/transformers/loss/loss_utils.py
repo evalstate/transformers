@@ -19,6 +19,7 @@ from torch.nn import BCEWithLogitsLoss, MSELoss
 
 from .loss_d_fine import DFineForObjectDetectionLoss
 from .loss_deformable_detr import DeformableDetrForObjectDetectionLoss, DeformableDetrForSegmentationLoss
+from .loss_deimv2 import Deimv2ForObjectDetectionLoss
 from .loss_for_object_detection import ForObjectDetectionLoss, ForSegmentationLoss
 from .loss_grounding_dino import GroundingDinoForObjectDetectionLoss
 from .loss_lw_detr import LwDetrForObjectDetectionLoss
@@ -30,10 +31,14 @@ def fixed_cross_entropy(
     target: torch.Tensor,
     num_items_in_batch: torch.Tensor | None = None,
     ignore_index: int = -100,
+    weight: torch.Tensor | None = None,
+    label_smoothing: float = 0.0,
     **kwargs,
 ) -> torch.Tensor:
     reduction = "sum" if num_items_in_batch is not None else "mean"
-    loss = nn.functional.cross_entropy(source, target, ignore_index=ignore_index, reduction=reduction)
+    loss = nn.functional.cross_entropy(
+        source, target, ignore_index=ignore_index, weight=weight, reduction=reduction, label_smoothing=label_smoothing
+    )
     if reduction == "sum":
         # just in case users pass an int for num_items_in_batch, which could be the case for custom trainer
         if torch.is_tensor(num_items_in_batch):
@@ -163,6 +168,7 @@ LOSS_MAPPING = {
     "RTDetrForObjectDetection": RTDetrForObjectDetectionLoss,
     "RTDetrV2ForObjectDetection": RTDetrForObjectDetectionLoss,
     "DFineForObjectDetection": DFineForObjectDetectionLoss,
+    "Deimv2ForObjectDetection": Deimv2ForObjectDetectionLoss,
     "CsmForConditionalGeneration": ForCausalLMLoss,
     "LwDetrForObjectDetection": LwDetrForObjectDetectionLoss,
 }
