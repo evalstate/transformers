@@ -18,11 +18,14 @@ Provides `sonicmoe_experts_forward` registered as "sonicmoe" in the ExpertsInter
 Requirements: CUDA, `kernels`, `nvidia-cutlass-dsl`, has_gate=True.
 """
 
+from __future__ import annotations
+
 import functools
 
 import torch
 
 from ..utils import logging
+from ..utils.import_utils import is_kernels_available
 from .hub_kernels import lazy_load_kernel
 
 
@@ -38,16 +41,33 @@ def _load_sonic_kernel():
     Load sonic-moe once and return its required symbols.
 
     Raises:
-        ImportError if the kernel or required symbols are not found.
+        ImportError if CUDA/hardware requirements are not met, or if the kernel or
+        required symbols are not found.
 
     Returns:
         Tuple of (ActivationType, moe_general_routing_inputs function) from the sonic-moe kernel.
     """
+    if not is_kernels_available():
+        raise ImportError("sonic-moe kernel requires the `kernels` package. Install it with `pip install -U kernels`.")
+
+    if not torch.cuda.is_available():
+        raise ImportError(
+            "sonic-moe kernel requires CUDA, but CUDA is not available. Use a different `experts_implementation`."
+        )
+
+    # sonic-moe requires Hopper (SM90) or newer
+    major = torch.cuda.get_device_capability()[0]
+    if major < 9:
+        raise ImportError(
+            f"sonic-moe requires a Hopper (SM90+) or newer GPU, but the current device "
+            f"has compute capability {major}.x. Use a different `experts_implementation`."
+        )
 
     kernel = lazy_load_kernel("sonic-moe")
     if kernel is None:
         raise ImportError(
-            "sonic-moe kernel not found. Make sure you have the `kernels` and `nvidia-cutlass-dsl` packages installed."
+            "Failed to load the sonic-moe kernel — check that `kernels-community/sonic-moe` "
+            "has a build matching the current torch/CUDA."
         )
 
     ActivationType = getattr(getattr(kernel, "enums", None), "ActivationType", None)
