@@ -17,6 +17,7 @@ import unittest
 
 import pytest
 from parameterized import parameterized
+from pytest import mark
 
 from transformers import (
     AutoTokenizer,
@@ -27,8 +28,13 @@ from transformers import (
 from transformers.testing_utils import (
     Expectations,
     cleanup,
+    require_deterministic_for_xpu,
+    require_flash_attn,
+    require_flash_attn_3,
+    require_flash_attn_4,
     require_torch,
     require_torch_accelerator,
+    require_torch_gpu,
     require_torch_multi_gpu,
     slow,
     torch_device,
@@ -124,6 +130,20 @@ class Gemma4TextModelTest(CausalLMModelTest, unittest.TestCase):
         pass
 
     def test_model_training(self):
+        pass
+
+    @unittest.skip(
+        "Under non-bf16 dtypes, MoE grouped_mm falls back to "
+        "_grouped_mm_fallback_backward which is incompatible with torch.compile."
+    )
+    def test_flash_attn_2_can_compile_with_attention_mask_None_without_graph_break(self):
+        pass
+
+    @unittest.skip(
+        "Under non-bf16 dtypes, MoE grouped_mm falls back to "
+        "_grouped_mm_fallback_backward which is incompatible with torch.compile."
+    )
+    def test_torch_compile_for_training(self):
         pass
 
 
@@ -470,6 +490,54 @@ class Gemma4Vision2TextModelTest(ModelTesterMixin, GenerationTesterMixin, unitte
     def test_generate_from_random_inputs_embeds(self):
         pass
 
+    @require_flash_attn
+    @require_torch_accelerator
+    @mark.flash_attn_test
+    @slow
+    def test_flash_attn_2_from_config(self):
+        # Gemma4 requires mm_token_type_ids in train mode, so we test in eval mode
+        self.flash_attn_from_config(attn_implementation="flash_attention_2", test_fwd_in_train=False)
+
+    @require_flash_attn_3
+    @require_torch_gpu
+    @mark.flash_attn_3_test
+    @slow
+    def test_flash_attn_3_from_config(self):
+        # Gemma4 requires mm_token_type_ids in train mode, so we test in eval mode
+        self.flash_attn_from_config(attn_implementation="flash_attention_3", test_fwd_in_train=False)
+
+    @require_flash_attn_4
+    @require_torch_gpu
+    @mark.flash_attn_4_test
+    @slow
+    def test_flash_attn_4_from_config(self):
+        # Gemma4 requires mm_token_type_ids in train mode, so we test in eval mode
+        self.flash_attn_from_config(attn_implementation="flash_attention_4", test_fwd_in_train=False)
+
+    @unittest.skip("The base test does not pass image_position_ids and mm_token_type_ids required by Gemma4")
+    def test_flash_attn_2_inference_equivalence(self):
+        pass
+
+    @unittest.skip("The base test does not pass image_position_ids and mm_token_type_ids required by Gemma4")
+    def test_flash_attn_2_inference_equivalence_right_padding(self):
+        pass
+
+    @unittest.skip("The base test does not pass image_position_ids and mm_token_type_ids required by Gemma4")
+    def test_flash_attn_3_inference_equivalence(self):
+        pass
+
+    @unittest.skip("The base test does not pass image_position_ids and mm_token_type_ids required by Gemma4")
+    def test_flash_attn_3_inference_equivalence_right_padding(self):
+        pass
+
+    @unittest.skip("The base test does not pass image_position_ids and mm_token_type_ids required by Gemma4")
+    def test_flash_attn_4_inference_equivalence(self):
+        pass
+
+    @unittest.skip("The base test does not pass image_position_ids and mm_token_type_ids required by Gemma4")
+    def test_flash_attn_4_inference_equivalence_right_padding(self):
+        pass
+
     @unittest.skip(
         "Randomly starts failing after module order changed in the __init__ because accelertate is not robust enough"
     )
@@ -516,6 +584,7 @@ class Gemma4IntegrationTest(unittest.TestCase):
     def tearDown(self):
         cleanup(torch_device, gc_collect=True)
 
+    @require_deterministic_for_xpu
     def test_model_with_image(self):
         model = Gemma4ForConditionalGeneration.from_pretrained(self.model_name, device_map=torch_device)
 
@@ -534,11 +603,13 @@ class Gemma4IntegrationTest(unittest.TestCase):
         EXPECTED_TEXTS = Expectations(
             {
                 ("cuda", 8): ['This image shows a **brown and white cow** standing on a **sandy beach** with the **ocean and a blue sky** in the background'],
+                ("xpu", 3): ['This image shows a **brown and white cow standing on a sandy beach near the ocean**.\n\nHere are some details about the image:\n\n*   '],
             }
         )  # fmt: skip
         EXPECTED_TEXT = EXPECTED_TEXTS.get_expectation()
         self.assertEqual(output_text, EXPECTED_TEXT)
 
+    @require_deterministic_for_xpu
     def test_model_with_image_batch(self):
         model = Gemma4ForConditionalGeneration.from_pretrained(self.model_name, device_map=torch_device)
 
@@ -580,11 +651,16 @@ class Gemma4IntegrationTest(unittest.TestCase):
                     "This image shows a **brown and white cow** standing on a **sandy beach** with the **ocean and a blue sky** in the background",
                     "No, these images are not identical.\n\nThe first image is a photograph of a **brown and white cow standing on a beach** under a blue",
                 ],
+                ("xpu", 3): [
+                    "This image shows a **brown and white cow** standing on a **sandy beach** with the **ocean and a blue sky** in the background",
+                    "No, these images are not identical.\n\nThe first image is a photograph of a **brown and white cow standing on a beach** under a blue",
+                ],
             }
         )
         EXPECTED_TEXT = EXPECTED_TEXTS.get_expectation()
         self.assertEqual(output_text, EXPECTED_TEXT)
 
+    @require_deterministic_for_xpu
     def test_model_multiimage(self):
         model = Gemma4ForConditionalGeneration.from_pretrained(self.model_name, device_map=torch_device)
 
@@ -614,6 +690,7 @@ class Gemma4IntegrationTest(unittest.TestCase):
         EXPECTED_TEXTS = Expectations(
             {
                 ("cuda", 8): ['Based on the image, here is a description of what I see:\n\n**Foreground & Street Scene:**\n* **Traffic Sign:** The most prominent'],
+                ("xpu", 3): ['Based on the image, here is a description of what I see:\n\n**Foreground & Street Scene:**\n* **Roadway:** There is an'],
             }
         )  # fmt: skip
         EXPECTED_TEXT = EXPECTED_TEXTS.get_expectation()
@@ -647,6 +724,7 @@ class Gemma4IntegrationTest(unittest.TestCase):
         EXPECTED_TEXT = EXPECTED_TEXTS.get_expectation()
         self.assertEqual(output_text, EXPECTED_TEXT)
 
+    @require_deterministic_for_xpu
     def test_model_text_only(self):
         model = AutoModelForCausalLM.from_pretrained(self.model_name, device_map=torch_device)
         tokenizer = AutoTokenizer.from_pretrained(self.model_name, padding_side="left")
@@ -666,6 +744,7 @@ class Gemma4IntegrationTest(unittest.TestCase):
             {
                 ("cuda", (8, 0)): ['## The Algorithmic Mind\n\nA whisper starts, a seed unseen,\nOf data vast, a vibrant sheen.\nA sea of numbers,'],
                 ("cuda", (8, 6)): ['## The Algorithmic Mind\n\nA tapestry of data, vast and deep,\nWhere silent numbers in their slumber sleep.\nA sea of text'],
+                ("xpu", 3): ['## The Algorithmic Mind\n\nA whisper starts in silicon deep,\nWhere data streams in endless sweep.\nNo flesh and blood, no beating'],
             }
         )  # fmt: skip
         EXPECTED_TEXT = EXPECTED_TEXTS.get_expectation()
@@ -696,6 +775,7 @@ class Gemma4IntegrationTest(unittest.TestCase):
 
     # Note: we do not test FA2 as the head dim is 512 on some layers, which is not compatible with the kernels
     @parameterized.expand([("sdpa",), ("eager",)])
+    @require_deterministic_for_xpu
     def test_generation_beyond_sliding_window(self, attn_implementation: str):
         """Test that we can correctly generate beyond the sliding window. Outputs for every attention functions
         should be coherent and identical.
@@ -734,7 +814,11 @@ class Gemma4IntegrationTest(unittest.TestCase):
                 ("cuda", 8): [
                     "That sounds lovely! It seems like you're really enjoying the place you'",
                     "Here are a few ways you could use or expand upon that list, depending on",
-                ]
+                ],
+                ("xpu", 3): [
+                    "That sounds lovely! It seems like you're really enjoying the place you'",
+                    "Here are a few ways you could use or expand upon that list, depending on",
+                ],
             }
         )
         self.assertEqual(output_text, EXPECTED_COMPLETIONS.get_expectation())
