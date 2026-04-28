@@ -1163,6 +1163,7 @@ class Gemma4TextScaledWordEmbedding(Gemma3TextScaledWordEmbedding):
 
 class Gemma4PreTrainedModel(Gemma3nPreTrainedModel):
     _no_split_modules = ["Gemma4TextDecoderLayer", "Gemma4VisionEncoderLayer", "Gemma4AudioLayer"]
+    _skip_keys_device_placement = ["past_key_values", "shared_kv_states"]
     input_modalities = ("image", "text", "video", "audio")
     _can_record_outputs = None  # override
 
