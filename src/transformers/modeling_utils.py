@@ -3371,6 +3371,34 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         if self._auto_class is not None:
             custom_object_save(self, save_directory, config=self.config)
 
+        # If tie_word_embeddings=True but weights have diverged (e.g. after PEFT merge_and_unload),
+        # auto-fix the config before saving, mirroring the load-side check in tie_weights().
+        if getattr(model_to_save.config, "tie_word_embeddings", False):
+            output_embeddings = model_to_save.get_output_embeddings()
+            if output_embeddings is not None:
+                out_w = getattr(output_embeddings, "weight", None)
+                in_w = getattr(model_to_save.get_input_embeddings(), "weight", None)
+                if out_w is not None and in_w is not None and out_w is not in_w:
+                    tied_keys = getattr(model_to_save, "_tied_weights_keys", None) or {}
+                    out_names = {n for n, p in model_to_save.named_parameters() if p is out_w}
+                    in_names = {n for n, p in model_to_save.named_parameters() if p is in_w}
+                    if any(
+                        (k in out_names and v in in_names) or (k in in_names and v in out_names)
+                        for k, v in tied_keys.items()
+                    ) and (
+                        out_w.shape != in_w.shape
+                        or (
+                            out_w.device == in_w.device
+                            and out_w.device.type != "meta"
+                            and not torch.equal(out_w, in_w)
+                        )
+                    ):
+                        model_to_save.config.tie_word_embeddings = False
+                        logger.warning(
+                            "Model config has `tie_word_embeddings=True` but input and output embedding "
+                            "weights have diverged. Saving config with `tie_word_embeddings=False`."
+                        )
+
         # Save the config
         if is_main_process:
             if not _hf_peft_config_loaded:

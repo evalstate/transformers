@@ -1602,6 +1602,28 @@ class ModelUtilsTest(TestCasePlus):
             model = LlamaForCausalLM._from_config(copy.deepcopy(config))
             self.assertTrue(model.lm_head.weight is not model.model.embed_tokens.weight)
 
+    def test_save_pretrained_auto_fixes_diverged_tied_embeddings(self):
+        """Test that save_pretrained sets tie_word_embeddings=False in config when weights have diverged."""
+        config = LlamaConfig(num_hidden_layers=2, hidden_size=32, intermediate_size=16, tie_word_embeddings=True)
+        model = LlamaForCausalLM(config)
+
+        # Simulate PEFT merge_and_unload: untie weights and assign different values
+        with torch.no_grad():
+            model.lm_head.weight = nn.Parameter(model.lm_head.weight.clone())
+            model.lm_head.weight.fill_(0.42)
+            model.model.embed_tokens.weight.fill_(0.24)
+
+        logger = logging.get_logger("transformers.modeling_utils")
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with CaptureLogger(logger) as cl:
+                model.save_pretrained(tmp_dir)
+
+            self.assertIn("weights have diverged. Saving config with `tie_word_embeddings=False`", cl.out)
+
+            with open(os.path.join(tmp_dir, "config.json")) as f:
+                saved_config = json.load(f)
+            self.assertFalse(saved_config["tie_word_embeddings"])
+
     def test_unexpected_keys_warnings(self):
         model = ModelWithHead(PreTrainedConfig(tie_word_embeddings=True))
         logger = logging.get_logger("transformers.modeling_utils")
