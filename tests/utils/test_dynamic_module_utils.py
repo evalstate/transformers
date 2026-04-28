@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib.util
 import os
+import sys
 
 import pytest
 
-from transformers.dynamic_module_utils import get_imports
+from transformers.dynamic_module_utils import custom_object_save, get_imports
 
 
 TOP_LEVEL_IMPORT = """
@@ -127,3 +129,31 @@ def test_import_parsing(tmp_path, case):
 
     parsed_imports = get_imports(tmp_file_path)
     assert parsed_imports == ["os"]
+
+
+def test_custom_object_save_destination_is_writable_when_source_is_readonly(tmp_path, monkeypatch):
+    # Regression test for https://github.com/huggingface/transformers/issues/45684:
+    # `custom_object_save` used `shutil.copy`, which preserves source mode bits, so
+    # a read-only source (e.g. a Perforce-managed file) produced a read-only copy
+    # in the saved-model directory.
+    src = tmp_path / "my_custom_module.py"
+    src.write_text("class CustomThing:\n    pass\n")
+
+    spec = importlib.util.spec_from_file_location("my_custom_module", src)
+    assert spec is not None
+    assert spec.loader is not None
+
+    module = importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules, "my_custom_module", module)
+    spec.loader.exec_module(module)
+
+    src.chmod(0o444)  # read-only source
+
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    custom_object_save(module.CustomThing, str(out_dir))
+
+    dest = out_dir / "my_custom_module.py"
+    assert dest.exists()
+    assert os.access(dest, os.W_OK), f"dest mode={oct(dest.stat().st_mode)} should be writable"
