@@ -108,7 +108,10 @@ def get_tool_call_config(processor, model: "PreTrainedModel") -> dict | None:
         schema = response_schema["properties"]["tool_calls"]
     else:
         # Fallback: known model families without full tokenizer config
-        fallback = next((v for k, v in _TOOL_CALL_FALLBACKS.items() if k in model.config.model_type), None)
+        fallback = next(
+            (v for k, v in _TOOL_CALL_FALLBACKS.items() if k in model.config.model_type),
+            None,
+        )
         if fallback is None:
             return None
         stc, etc, schema = fallback["stc"], fallback["etc"], fallback["schema"]
@@ -131,7 +134,7 @@ def _normalize_tool_call(tool_call: dict) -> dict:
     arguments = function.get("arguments", {})
     return {
         "name": function["name"],
-        "arguments": json.dumps(arguments) if not isinstance(arguments, str) else arguments,
+        "arguments": (json.dumps(arguments) if not isinstance(arguments, str) else arguments),
     }
 
 
@@ -153,7 +156,7 @@ def parse_tool_calls(processor, generated_ids, schema: dict) -> list[dict] | Non
     if not isinstance(parsed, list):
         parsed = [parsed]
     tool_calls = [_normalize_tool_call(tool_call) for tool_call in parsed]
-    return tool_calls if tool_calls else None
+    return tool_calls or None
 
 
 class DownloadAggregator:
@@ -552,7 +555,12 @@ class GenerateManager(BaseGenerateManager):
         # ProcessorMixin exposes the fast tokenizer as .tokenizer; PreTrainedTokenizerFast is already one.
         rust_tokenizer = getattr(processor, "tokenizer", processor)._tokenizer  # type: ignore[union-attr]
         streamer = DirectStreamer(rust_tokenizer, loop, queue, tool_config=tool_config)
-        gen_kwargs = {**inputs, "streamer": streamer, "generation_config": gen_config, "tokenizer": processor}
+        gen_kwargs = {
+            **inputs,
+            "streamer": streamer,
+            "generation_config": gen_config,
+            "tokenizer": processor,
+        }
         if hasattr(model, "has_talker"):
             gen_kwargs["generation_mode"] = "text"
 
@@ -578,7 +586,11 @@ class GenerateManager(BaseGenerateManager):
         """Run generation to completion via ``model.generate()`` on the inference thread."""
         # Multimodal models (e.g. Qwen2.5-Omni) may generate audio alongside text by default;
         # force text-only output since the serve layer only handles text
-        generate_kwargs = {**inputs, "generation_config": gen_config, "tokenizer": processor}
+        generate_kwargs = {
+            **inputs,
+            "generation_config": gen_config,
+            "tokenizer": processor,
+        }
         if hasattr(model, "has_talker"):
             generate_kwargs["generation_mode"] = "text"
         sequences = await self.async_submit(model.generate, **generate_kwargs)
@@ -662,7 +674,14 @@ class CBGenerateManager(BaseGenerateManager):
         )
         # ProcessorMixin exposes the fast tokenizer as .tokenizer; PreTrainedTokenizerFast is already one.
         rust_tokenizer = getattr(processor, "tokenizer", processor)._tokenizer  # type: ignore[union-attr]
-        streamer = CBStreamer(self._cb, request_id, rust_tokenizer, loop, text_queue, tool_config=tool_config)
+        streamer = CBStreamer(
+            self._cb,
+            request_id,
+            rust_tokenizer,
+            loop,
+            text_queue,
+            tool_config=tool_config,
+        )
 
         # Register a direct callback: the dispatcher calls this on the event loop with each GenerationOutput.
         # This decodes tokens and pushes text straight to the SSE text_queue
@@ -838,7 +857,10 @@ class BaseHandler:
         if self._valid_params_class is not None:
             unexpected = input_keys - getattr(self._valid_params_class, "__mutable_keys__", set())
             if unexpected:
-                raise HTTPException(status_code=422, detail=f"Unexpected fields in the request: {unexpected}")
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unexpected fields in the request: {unexpected}",
+                )
         unused = input_keys & self._unused_fields
         if unused:
             logger.warning_once(f"Ignoring unsupported fields in the request: {unused}")
@@ -872,7 +894,10 @@ class BaseHandler:
         return model_id, model, processor
 
     def _build_generation_config(
-        self, body: dict, model_generation_config: "GenerationConfig", use_cb: bool = False
+        self,
+        body: dict,
+        model_generation_config: "GenerationConfig",
+        use_cb: bool = False,
     ) -> "GenerationConfig":
         """Build a GenerationConfig from shared params (temperature, top_p, seed, generation_config JSON).
 
@@ -959,7 +984,10 @@ class BaseHandler:
                 if content_type in ("text", "input_text", "output_text"):
                     parsed["content"].append({"type": "text", "text": content["text"]})
                 # Image: chat completions ("image_url") and Responses API ("input_image")
-                elif content_type in ("image_url", "input_image") and modality in (Modality.VLM, Modality.MULTIMODAL):
+                elif content_type in ("image_url", "input_image") and modality in (
+                    Modality.VLM,
+                    Modality.MULTIMODAL,
+                ):
                     # chat completions: {"image_url": {"url": "..."}}, Responses API: {"image_url": "..."}
                     url = content["image_url"]
                     if isinstance(url, dict):
@@ -972,7 +1000,10 @@ class BaseHandler:
                     audio_b64 = input_audio["data"]
                     parsed["content"].append({"type": "audio", "url": f"data:audio/{fmt};base64,{audio_b64}"})
                 # Extensions (not part of the OpenAI API standard)
-                elif content_type == "video_url" and modality in (Modality.VLM, Modality.MULTIMODAL):
+                elif content_type == "video_url" and modality in (
+                    Modality.VLM,
+                    Modality.MULTIMODAL,
+                ):
                     parsed["content"].append({"type": "video", "url": content["video_url"]["url"]})
                 elif content_type == "audio_url" and modality == Modality.MULTIMODAL:
                     parsed["content"].append({"type": "audio", "url": content["audio_url"]["url"]})
