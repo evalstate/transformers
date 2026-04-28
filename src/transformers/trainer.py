@@ -3834,15 +3834,16 @@ class Trainer:
             if state_dict is None:
                 state_dict = self.model.state_dict()
 
-            if isinstance(self.accelerator.unwrap_model(self.model, keep_torch_compile=False), supported_classes):
-                self.accelerator.unwrap_model(self.model, keep_torch_compile=False).save_pretrained(
-                    output_dir, state_dict=state_dict
-                )
+            unwrapped_model = self.accelerator.unwrap_model(self.model, keep_torch_compile=False)
+            if isinstance(unwrapped_model, supported_classes):
+                unwrapped_model.save_pretrained(output_dir, state_dict=state_dict)
             else:
                 logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
                 safetensors.torch.save_file(
                     state_dict, os.path.join(output_dir, SAFE_WEIGHTS_NAME), metadata={"format": "pt"}
                 )
+                if hasattr(unwrapped_model, "config") and unwrapped_model.config is not None:
+                    unwrapped_model.config.save_pretrained(output_dir)
         else:
             self.model.save_pretrained(output_dir, state_dict=state_dict)
 
