@@ -22,7 +22,7 @@ fill-in-the-middle text insertion.
 import asyncio
 import time
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from ...utils import logging
 from ...utils.import_utils import is_serve_available
@@ -34,7 +34,6 @@ if is_serve_available():
     from openai.types import Completion, CompletionChoice, CompletionUsage
     from openai.types.completion_create_params import CompletionCreateParamsBase
 
-
 from .utils import BaseGenerateManager, BaseHandler, _StreamError
 
 
@@ -42,11 +41,21 @@ if TYPE_CHECKING:
     from transformers import GenerationConfig, PreTrainedModel, PreTrainedTokenizerFast, ProcessorMixin
 
 
-class TransformersTextCompletionCreateParams(CompletionCreateParamsBase, total=False):
-    generation_config: str
-    seed: int
-    stream: bool
+# --- FINAL ROBUST PATCH ---
+if "CompletionCreateParamsBase" in globals():
+    # If the real OpenAI class was successfully imported, use it
+    class TransformersTextCompletionCreateParams(CompletionCreateParamsBase, total=False):
+        generation_config: str
+        seed: int
 
+else:
+    # Fallback to standard TypedDict if OpenAI types are missing
+    class TransformersTextCompletionCreateParams(TypedDict, total=False):
+        generation_config: str
+        seed: int
+
+
+# --- END PATCH ---
 
 # Fields accepted by the OpenAI schema but not yet supported.
 UNUSED_LEGACY_COMPLETION_FIELDS = {
@@ -109,10 +118,26 @@ class CompletionHandler(BaseHandler):
         streaming = body.get("stream")
 
         if streaming:
-            return self._streaming(request_id, model, processor, model_id, inputs, gen_config, gen_manager, suffix)
+            return self._streaming(
+                request_id,
+                model,
+                processor,
+                model_id,
+                inputs,
+                gen_config,
+                gen_manager,
+                suffix,
+            )
         else:
             return await self._non_streaming(
-                request_id, model, processor, model_id, inputs, gen_config, gen_manager, suffix
+                request_id,
+                model,
+                processor,
+                model_id,
+                inputs,
+                gen_config,
+                gen_manager,
+                suffix,
             )
 
     # ----- streaming -----
@@ -261,7 +286,12 @@ class CompletionHandler(BaseHandler):
 
     # ----- generation config -----
 
-    def _build_generation_config(self, body: dict, model_generation_config: "GenerationConfig", use_cb: bool = False):
+    def _build_generation_config(
+        self,
+        body: dict,
+        model_generation_config: "GenerationConfig",
+        use_cb: bool = False,
+    ):
         """Apply legacy completion params (``max_tokens``, ``frequency_penalty``, ``stop``) on top of base config."""
         generation_config = super()._build_generation_config(body, model_generation_config, use_cb=use_cb)
 

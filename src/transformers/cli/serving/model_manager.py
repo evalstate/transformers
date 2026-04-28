@@ -159,11 +159,20 @@ class ModelManager:
         return resolved
 
     def _validate_args(self):
-        if self.quantization is not None and self.quantization not in ("bnb-4bit", "bnb-8bit"):
+        if self.quantization is not None and self.quantization not in (
+            "bnb-4bit",
+            "bnb-8bit",
+        ):
             raise ValueError(
                 f"Unsupported quantization method: '{self.quantization}'. Must be 'bnb-4bit' or 'bnb-8bit'."
             )
-        VALID_ATTN_IMPLEMENTATIONS = {"eager", "sdpa", "flash_attention_2", "flash_attention_3", "flex_attention"}
+        VALID_ATTN_IMPLEMENTATIONS = {
+            "eager",
+            "sdpa",
+            "flash_attention_2",
+            "flash_attention_3",
+            "flex_attention",
+        }
         is_kernels_community = self.attn_implementation is not None and self.attn_implementation.startswith(
             "kernels-community/"
         )
@@ -208,7 +217,10 @@ class ModelManager:
         return AutoProcessor.from_pretrained(model_id, revision=revision, trust_remote_code=self.trust_remote_code)
 
     def _load_model(
-        self, model_id_and_revision: str, tqdm_class: type | None = None, progress_callback: Callable | None = None
+        self,
+        model_id_and_revision: str,
+        tqdm_class: type | None = None,
+        progress_callback: Callable | None = None,
     ) -> "PreTrainedModel":
         """Load a model.
 
@@ -270,10 +282,18 @@ class ModelManager:
             if model_id_and_revision not in self.loaded_models:
                 logger.warning(f"Loading {model_id_and_revision}")
                 if progress_callback is not None:
-                    progress_callback({"status": "loading", "model": model_id_and_revision, "stage": "processor"})
+                    progress_callback(
+                        {
+                            "status": "loading",
+                            "model": model_id_and_revision,
+                            "stage": "processor",
+                        }
+                    )
                 processor = self._load_processor(model_id_and_revision)
                 model = self._load_model(
-                    model_id_and_revision, tqdm_class=tqdm_class, progress_callback=progress_callback
+                    model_id_and_revision,
+                    tqdm_class=tqdm_class,
+                    progress_callback=progress_callback,
                 )
                 self.loaded_models[model_id_and_revision] = TimedModel(
                     model,
@@ -282,13 +302,25 @@ class ModelManager:
                     on_unload=lambda key=model_id_and_revision: self.loaded_models.pop(key, None),
                 )
                 if progress_callback is not None:
-                    progress_callback({"status": "ready", "model": model_id_and_revision, "cached": False})
+                    progress_callback(
+                        {
+                            "status": "ready",
+                            "model": model_id_and_revision,
+                            "cached": False,
+                        }
+                    )
             else:
                 self.loaded_models[model_id_and_revision].reset_timer()
                 model = self.loaded_models[model_id_and_revision].model
                 processor = self.loaded_models[model_id_and_revision].processor
                 if progress_callback is not None:
-                    progress_callback({"status": "ready", "model": model_id_and_revision, "cached": True})
+                    progress_callback(
+                        {
+                            "status": "ready",
+                            "model": model_id_and_revision,
+                            "cached": True,
+                        }
+                    )
         return model, processor
 
     async def load_model_streaming(self, model_id_and_revision: str):
@@ -384,7 +416,8 @@ class ModelManager:
 
     @staticmethod
     def get_model_modality(
-        model: "PreTrainedModel", processor: "ProcessorMixin | PreTrainedTokenizerFast | None" = None
+        model: "PreTrainedModel",
+        processor: "ProcessorMixin | PreTrainedTokenizerFast | None" = None,
     ) -> Modality:
         """Detect whether a model is an LLM or VLM based on its architecture.
 
@@ -441,7 +474,10 @@ class ModelManager:
                 continue
 
             for ref, revision_info in repo.refs.items():
-                config_path = next((f.file_path for f in revision_info.files if f.file_name == "config.json"), None)
+                config_path = next(
+                    (f.file_path for f in revision_info.files if f.file_name == "config.json"),
+                    None,
+                )
                 if not config_path:
                     continue
 

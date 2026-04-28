@@ -20,7 +20,7 @@ Supports streaming (SSE) and non-streaming (JSON) responses.
 import asyncio
 import time
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from ...utils import logging
 from ...utils.import_utils import is_serve_available
@@ -48,18 +48,16 @@ if is_serve_available():
         ResponseTextDeltaEvent,
         ResponseTextDoneEvent,
     )
-    from openai.types.responses.response_create_params import ResponseCreateParamsStreaming
-    from openai.types.responses.response_usage import InputTokensDetails, OutputTokensDetails, ResponseUsage
+    from openai.types.responses.response_create_params import (
+        ResponseCreateParamsStreaming,
+    )
+    from openai.types.responses.response_usage import (
+        InputTokensDetails,
+        OutputTokensDetails,
+        ResponseUsage,
+    )
 
-
-from .utils import (
-    BaseGenerateManager,
-    BaseHandler,
-    Modality,
-    _StreamError,
-    get_tool_call_config,
-    parse_tool_calls,
-)
+from .utils import BaseGenerateManager, BaseHandler, Modality, _StreamError, get_tool_call_config, parse_tool_calls
 
 
 if TYPE_CHECKING:
@@ -69,10 +67,21 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-class TransformersResponseCreateParamsStreaming(ResponseCreateParamsStreaming, total=False):
-    generation_config: str
-    seed: int
+# --- FINAL ROBUST PATCH ---
+if "ResponseCreateParamsStreaming" in globals():
 
+    class TransformersResponseCreateParamsStreaming(ResponseCreateParamsStreaming, total=False):
+        generation_config: str
+        seed: int
+
+else:
+
+    class TransformersResponseCreateParamsStreaming(TypedDict, total=False):
+        generation_config: str
+        seed: int
+
+
+# --- END PATCH ---
 
 UNUSED_RESPONSE_FIELDS = {
     "background",
@@ -192,7 +201,14 @@ class ResponseHandler(BaseHandler):
         if not tools:
             return tools
         return [
-            {"type": "function", "function": {k: v for k, v in t.items() if k != "type"}} if "function" not in t else t
+            (
+                {
+                    "type": "function",
+                    "function": {k: v for k, v in t.items() if k != "type"},
+                }
+                if "function" not in t
+                else t
+            )
             for t in tools
         ]
 
@@ -278,7 +294,10 @@ class ResponseHandler(BaseHandler):
                 )
 
             else:
-                raise HTTPException(status_code=422, detail=f"Unsupported input item type: {item_type!r}")
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unsupported input item type: {item_type!r}",
+                )
 
         return messages
 
@@ -402,7 +421,11 @@ class ResponseHandler(BaseHandler):
                             logger.error(f"Exception in response generation: {text.msg}")
                             sse_parts.append(
                                 self.chunk_to_sse(
-                                    ResponseErrorEvent(type="error", sequence_number=seq, message=text.msg)
+                                    ResponseErrorEvent(
+                                        type="error",
+                                        sequence_number=seq,
+                                        message=text.msg,
+                                    )
                                 )
                             )
                             seq += 1
@@ -540,7 +563,12 @@ class ResponseHandler(BaseHandler):
                     ResponseCompletedEvent(
                         type="response.completed",
                         sequence_number=seq,
-                        response=Response(**response_base, status="completed", output=all_output, usage=usage),
+                        response=Response(
+                            **response_base,
+                            status="completed",
+                            output=all_output,
+                            usage=usage,
+                        ),
                     )
                 )
                 seq += 1
@@ -616,7 +644,12 @@ class ResponseHandler(BaseHandler):
 
     # ----- helpers -----
 
-    def _build_generation_config(self, body: dict, model_generation_config: "GenerationConfig", use_cb: bool = False):
+    def _build_generation_config(
+        self,
+        body: dict,
+        model_generation_config: "GenerationConfig",
+        use_cb: bool = False,
+    ):
         """Apply Responses API params (``max_output_tokens``) on top of the base generation config."""
         generation_config = super()._build_generation_config(body, model_generation_config, use_cb=use_cb)
 

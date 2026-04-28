@@ -465,7 +465,7 @@ def _test_eager_matches_sdpa_inference(
             elif torch_device in ["hpu", "npu"]:
                 atol = atols["cuda", enable_kernels, dtype]
                 rtol = rtols["cuda", enable_kernels, dtype]
-            elif torch_device == "xpu":
+            elif torch_device in ("xpu", "mps"):
                 # As of PyTorch 2.5 XPU backend supports only torch.nn.attention.SDPBackend.MATH
                 # which is implemented on PyTorch level using aten operators and is
                 # device agnostic with respect to implementation of each aten operator.
@@ -3994,8 +3994,9 @@ class ModelTesterMixin:
                 self.skipTest(reason=f"At least some parts of this model do not support {attn_implementation}")
 
             # TODO: to change it in the future with other relevant auto classes
+            # deepcopy to avoid mutating the shared config (e.g. _from_config sets dtype on sub-configs)
             fa_model = model_class._from_config(
-                config, attn_implementation=attn_implementation, dtype=torch.bfloat16
+                copy.deepcopy(config), attn_implementation=attn_implementation, dtype=torch.bfloat16
             ).to(torch_device)
 
             # By default, we perform the forward pass in train mode, because it's more sctrict than eval mode. If the

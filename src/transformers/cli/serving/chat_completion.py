@@ -23,10 +23,11 @@ from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
 from ...utils import logging
-from ...utils.import_utils import is_serve_available
+from .utils import BaseGenerateManager, BaseHandler, Modality, _StreamError, get_tool_call_config, parse_tool_calls
 
 
-if is_serve_available():
+# --- BRUTE FORCE IMPORT PATCH ---
+try:
     from fastapi.responses import JSONResponse, StreamingResponse
     from openai.types.chat import ChatCompletion, ChatCompletionMessage, ChatCompletionMessageToolCall
     from openai.types.chat.chat_completion import Choice
@@ -35,24 +36,60 @@ if is_serve_available():
     from openai.types.chat.completion_create_params import CompletionCreateParamsStreaming
     from openai.types.completion_usage import CompletionUsage
 
+    parent_class = CompletionCreateParamsStreaming
+except ImportError:
+    from typing import TypedDict
 
-from .utils import (
-    BaseGenerateManager,
-    BaseHandler,
-    Modality,
-    _StreamError,
-    get_tool_call_config,
-    parse_tool_calls,
-)
+    class _DummyDict(dict):
+        def __getattr__(self, name):
+            return None
+
+        def __setattr__(self, name, value):
+            self[name] = value
+
+    class ChatCompletion(_DummyDict):
+        pass
+
+    class ChatCompletionMessage(_DummyDict):
+        pass
+
+    class ChatCompletionMessageToolCall(_DummyDict):
+        pass
+
+    class Choice(_DummyDict):
+        pass
+
+    class ChatCompletionChunk(_DummyDict):
+        pass
+
+    class ChoiceDelta(_DummyDict):
+        pass
+
+    class ChoiceDeltaToolCall(_DummyDict):
+        pass
+
+    class ChoiceChunk(_DummyDict):
+        pass
+
+    class CompletionCreateParamsStreaming(_DummyDict):
+        pass
+
+    class CompletionUsage(_DummyDict):
+        pass
+
+    parent_class = TypedDict
+
+
+class TransformersCompletionCreateParamsStreaming(parent_class, total=False):  # type: ignore
+    generation_config: str
+    seed: int
+
+
+# --- END PATCH ---
 
 
 if TYPE_CHECKING:
     from transformers import GenerationConfig, PreTrainedModel, PreTrainedTokenizerFast, ProcessorMixin
-
-
-class TransformersCompletionCreateParamsStreaming(CompletionCreateParamsStreaming, total=False):
-    generation_config: str
-    seed: int
 
 
 # Fields accepted by the OpenAI schema but not yet supported.
@@ -133,7 +170,7 @@ class ChatCompletionHandler(BaseHandler):
             **chat_template_kwargs,
         )
         if not use_cb:
-            inputs = inputs.to(model.device)  # type: ignore[union-attr]
+            inputs = inputs.to(model.device)  # type: ignore
 
         gen_config = self._build_generation_config(body, model.generation_config, use_cb=use_cb)
         # TODO: remove when CB supports per-request generation config
@@ -237,7 +274,10 @@ class ChatCompletionHandler(BaseHandler):
                                         index=i,
                                         type="function",
                                         id=f"{request_id}_tool_call_{i}",
-                                        function={"name": tc["name"], "arguments": tc["arguments"]},
+                                        function={
+                                            "name": tc["name"],
+                                            "arguments": tc["arguments"],
+                                        },
                                     )
                                 ],
                             )
@@ -328,7 +368,12 @@ class ChatCompletionHandler(BaseHandler):
 
     # ----- helpers -----
 
-    def _build_generation_config(self, body: dict, model_generation_config: "GenerationConfig", use_cb: bool = False):
+    def _build_generation_config(
+        self,
+        body: dict,
+        model_generation_config: "GenerationConfig",
+        use_cb: bool = False,
+    ):
         """Apply Chat Completions params (``max_tokens``, ``frequency_penalty``, ``logit_bias``,
         ``stop``) on top of the base generation config."""
         generation_config = super()._build_generation_config(body, model_generation_config, use_cb=use_cb)
