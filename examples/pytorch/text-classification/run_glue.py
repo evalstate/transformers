@@ -604,6 +604,7 @@ def main():
             tasks.append("mnli-mm")
             predict_datasets.append(raw_datasets["test_mismatched"])
 
+        id2label = model.config.id2label
         for predict_dataset, task in zip(predict_datasets, tasks):
             # Removing the `label` columns because it contains -1 and Trainer won't like that.
             predict_dataset = predict_dataset.remove_columns("label")
@@ -619,7 +620,7 @@ def main():
                         if is_regression:
                             writer.write(f"{index}\t{item:3.3f}\n")
                         else:
-                            item = label_list[item]
+                            item = id2label[item]
                             writer.write(f"{index}\t{item}\n")
 
     kwargs = {"finetuned_from": model_args.model_name_or_path, "tasks": "text-classification"}
