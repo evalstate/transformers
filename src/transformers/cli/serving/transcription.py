@@ -16,7 +16,7 @@ Handler for the /v1/audio/transcriptions endpoint.
 """
 
 import io
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from ...utils import logging
 from ...utils.import_utils import is_serve_available
@@ -25,7 +25,9 @@ from ...utils.import_utils import is_serve_available
 if is_serve_available():
     from fastapi import HTTPException, Request
     from fastapi.responses import JSONResponse, StreamingResponse
-    from openai.types.audio.transcription_create_params import TranscriptionCreateParamsBase
+    from openai.types.audio.transcription_create_params import (
+        TranscriptionCreateParamsBase,
+    )
 
 from .model_manager import ModelManager
 from .utils import DirectStreamer, GenerateManager, GenerationState, _StreamError
@@ -38,8 +40,21 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-class TransformersTranscriptionCreateParams(TranscriptionCreateParamsBase, total=False):
-    stream: bool
+# --- FINAL ROBUST PATCH ---
+if "TranscriptionCreateParamsBase" in globals():
+
+    class TransformersTranscriptionCreateParams(TranscriptionCreateParamsBase, total=False):
+        generation_config: str
+        seed: int
+
+else:
+
+    class TransformersTranscriptionCreateParams(TypedDict, total=False):
+        generation_config: str
+        seed: int
+
+
+# --- END PATCH ---
 
 
 UNUSED_TRANSCRIPTION_FIELDS = {
@@ -77,7 +92,10 @@ class TranscriptionHandler:
         """Validate transcription request fields."""
         unexpected = form_keys - getattr(TransformersTranscriptionCreateParams, "__mutable_keys__", set())
         if unexpected:
-            raise HTTPException(status_code=422, detail=f"Unexpected fields in the request: {unexpected}")
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unexpected fields in the request: {unexpected}",
+            )
         unused = form_keys & UNUSED_TRANSCRIPTION_FIELDS
         if unused:
             logger.warning_once(f"Ignoring unsupported fields in the request: {unused}")
@@ -116,7 +134,10 @@ class TranscriptionHandler:
         audio_model, audio_processor = self.model_manager.load_model_and_processor(model_id_and_revision)
         base_manager = self.generation_state.get_manager(model_id_and_revision)
         if not isinstance(base_manager, GenerateManager):
-            raise HTTPException(status_code=400, detail="Audio transcription requires sequential generation (not CB)")
+            raise HTTPException(
+                status_code=400,
+                detail="Audio transcription requires sequential generation (not CB)",
+            )
         gen_manager = base_manager
         audio_inputs = self._prepare_audio_inputs(file_bytes, audio_processor, audio_model)
 
@@ -126,7 +147,9 @@ class TranscriptionHandler:
 
     @staticmethod
     def _prepare_audio_inputs(
-        file_bytes: bytes, audio_processor: "ProcessorMixin", audio_model: "PreTrainedModel"
+        file_bytes: bytes,
+        audio_processor: "ProcessorMixin",
+        audio_model: "PreTrainedModel",
     ) -> dict:
         """Load audio bytes and convert to model inputs."""
         import librosa
