@@ -608,6 +608,10 @@ def _build_checkpoint_conversion_mapping():
         WeightRenaming("mlp.shared_expert.", "mlp.shared_experts."),
     ]
 
+    mapping["gemma4"] = [
+        WeightRenaming(r"\.linear\.weight", ".weight"),
+    ]
+
     for model_type, base_pattern in _MODEL_TO_CONVERSION_PATTERN.items():
         if model_type in mapping:
             continue
