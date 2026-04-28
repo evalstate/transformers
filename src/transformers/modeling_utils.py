@@ -2991,6 +2991,8 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
             old_num_tokens, old_lm_head_dim = (
                 old_lm_head.weight.size() if not transposed else old_lm_head.weight.t().size()
             )
+        old_num_tokens = getattr(old_lm_head, "out_features", old_num_tokens)
+        old_lm_head_dim = getattr(old_lm_head, "in_features", old_lm_head_dim)
 
         if old_num_tokens == new_num_tokens and not is_deepspeed_zero3_enabled():
             old_lm_head.out_features = new_num_tokens  # maybe weights are tied which doesn't update attr
