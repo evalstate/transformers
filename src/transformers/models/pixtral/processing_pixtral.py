@@ -32,12 +32,14 @@ from ...utils.import_utils import requires
 
 if is_vision_available():
     from .image_processing_pixtral import get_resize_output_image_size
+from .image_processing_pixtral import PixtralImageProcessorKwargs
 
 
 logger = logging.get_logger(__name__)
 
 
 class PixtralProcessorKwargs(ProcessingKwargs, total=False):
+    images_kwargs: PixtralImageProcessorKwargs
     _defaults = {
         "text_kwargs": {
             "padding": False,

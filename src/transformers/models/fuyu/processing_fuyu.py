@@ -30,6 +30,7 @@ from ...processing_utils import (
 from ...tokenization_utils_base import PreTokenizedInput, TextInput
 from ...utils import auto_docstring, is_torch_available, logging, requires_backends
 from ...utils.import_utils import requires
+from .image_processing_fuyu import FuyuImagesKwargs
 
 
 if is_torch_available():
@@ -56,6 +57,7 @@ BEGINNING_OF_ANSWER_STRING = "<0x04>"  # <boa>
 
 
 class FuyuProcessorKwargs(ProcessingKwargs, total=False):
+    images_kwargs: FuyuImagesKwargs
     _defaults = {
         "text_kwargs": {
             "add_special_tokens": True,
