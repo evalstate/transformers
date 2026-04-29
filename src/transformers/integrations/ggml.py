@@ -180,6 +180,29 @@ GGUF_CONFIG_MAPPING = {
         "ssm.time_step_rank": "linear_num_value_heads",
         "ssm.inner_size": None,
     },
+    "qwen3_next": {
+        "context_length": "max_position_embeddings",
+        "block_count": "num_hidden_layers",
+        "feed_forward_length": "intermediate_size",
+        "embedding_length": "hidden_size",
+        "rope.dimension_count": "_rope_dimension_count",
+        "rope.freq_base": "_rope_freq_base",
+        "attention.key_length": "head_dim",
+        "attention.value_length": None,
+        "attention.head_count": "num_attention_heads",
+        "attention.head_count_kv": "num_key_value_heads",
+        "attention.layer_norm_rms_epsilon": "rms_norm_eps",
+        "vocab_size": "vocab_size",
+        "expert_count": "num_experts",
+        "expert_used_count": "num_experts_per_tok",
+        "expert_feed_forward_length": "moe_intermediate_size",
+        "expert_shared_feed_forward_length": "shared_expert_intermediate_size",
+        "ssm.conv_kernel": "linear_conv_kernel_dim",
+        "ssm.state_size": "linear_key_head_dim",
+        "ssm.group_count": "linear_num_key_heads",
+        "ssm.time_step_rank": "linear_num_value_heads",
+        "ssm.inner_size": "_ssm_inner_size",
+    },
     "falcon": {
         "context_length": "max_position_embeddings",
         "block_count": "num_hidden_layers",
@@ -409,6 +432,9 @@ GGUF_CONFIG_DEFAULTS_MAPPING = {
     "qwen3_5_moe_text": {
         # Same as qwen3_moe — llama.cpp's qwen35moe.cpp normalizes routed
         # expert weights, so override the HF default to match.
+        "norm_topk_prob": True,
+    },
+    "qwen3_next": {
         "norm_topk_prob": True,
     },
     "minimax_m2": {
@@ -851,6 +877,7 @@ GGUF_TO_FAST_CONVERTERS = {
     "qwen3": GGUFQwen2Converter,
     "qwen3_moe": GGUFQwen2Converter,
     "qwen3_5_moe_text": GGUFQwen2Converter,
+    "qwen3_next": GGUFQwen2Converter,
     "phi3": GGUFPhi3Converter,
     "bloom": GGUFGPTConverter,
     "falcon": GGUFGPTConverter,
