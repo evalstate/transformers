@@ -1383,7 +1383,7 @@ class ProphetNetModel(ProphetNetPreTrainedModel):
         attention_mask: torch.Tensor | None = None,
         decoder_input_ids: torch.Tensor | None = None,
         decoder_attention_mask: torch.BoolTensor | None = None,
-        encoder_outputs: tuple | None = None,
+        encoder_outputs: tuple | BaseModelOutput | None = None,
         past_key_values: Cache | None = None,
         inputs_embeds: torch.Tensor | None = None,
         decoder_inputs_embeds: torch.Tensor | None = None,
@@ -1441,6 +1441,12 @@ class ProphetNetModel(ProphetNetPreTrainedModel):
                 output_attentions=output_attentions,
                 output_hidden_states=output_hidden_states,
                 return_dict=return_dict,
+            )
+        elif return_dict and isinstance(encoder_outputs, tuple):
+            encoder_outputs = BaseModelOutput(
+                last_hidden_state=encoder_outputs[0],
+                hidden_states=encoder_outputs[1] if len(encoder_outputs) > 1 else None,
+                attentions=encoder_outputs[2] if len(encoder_outputs) > 2 else None,
             )
 
         # decoder outputs consists of (dec_features, past_key_values, dec_hidden, dec_attn)
