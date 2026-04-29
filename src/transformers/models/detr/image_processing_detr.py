@@ -438,8 +438,13 @@ class DetrImageProcessor(TorchvisionBackend):
         kwargs.setdefault("do_pad", kwargs.pop("pad_and_return_pixel_mask", self.do_pad))
 
         size = kwargs.pop("size", None)
-        max_size = None if size is None else kwargs.pop("max_size", 1333)
-        size = size if size is not None else {"shortest_edge": 800, "longest_edge": 1333}
+        max_size = kwargs.pop("max_size", None)
+
+        if size is None:
+            size = {"shortest_edge": 800, "longest_edge": max_size if max_size is not None else 1333}
+        elif isinstance(size, dict) and max_size is not None and "longest_edge" not in size:
+            size = {**size, "longest_edge": max_size}
+
         # Convert size dict for backwards compat with max_size parameter
         kwargs["size"] = get_size_dict(size, max_size=max_size, default_to_square=False)
 
