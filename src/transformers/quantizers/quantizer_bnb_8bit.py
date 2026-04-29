@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import importlib
 from typing import TYPE_CHECKING
+
+from packaging import version
 
 from .base import HfQuantizer
 
@@ -176,3 +179,7 @@ class Bnb8BitHfQuantizer(HfQuantizer):
                 )
             ]
         return []
+
+    @property
+    def is_compileable(self) -> bool:
+        return version.parse(importlib.metadata.version("bitsandbytes")) >= version.parse("0.46.0")

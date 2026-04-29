@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import importlib
 from typing import TYPE_CHECKING
+
+from packaging import version
 
 from .base import HfQuantizer
 from .quantizers_utils import get_module_from_name
@@ -185,3 +188,9 @@ class Bnb4BitHfQuantizer(HfQuantizer):
                 )
             ]
         return []
+
+    @property
+    def is_compileable(self) -> bool:
+        # Compatible with PyTorch 2.4+ for fullgraph=False.
+        # Requires PyTorch 2.8 nightly for fullgraph=True.
+        return version.parse(importlib.metadata.version("bitsandbytes")) >= version.parse("0.46.0")
