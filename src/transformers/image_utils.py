@@ -17,6 +17,7 @@ import os
 from collections.abc import Iterable
 from dataclasses import dataclass, fields
 from io import BytesIO
+from pathlib import Path
 from typing import Any, Union
 
 import httpx
@@ -463,14 +464,14 @@ def valid_coco_panoptic_annotations(annotations: Iterable[dict[str, list | tuple
 
 
 def load_image(
-    image: Union[str, "PIL.Image.Image"],
+    image: Union[str, Path, "PIL.Image.Image"],
     timeout: float | None = None,
 ) -> "PIL.Image.Image":
     """
     Loads `image` to a PIL Image.
 
     Args:
-        image (`str` or `PIL.Image.Image`):
+        image (`str`, `Path` or `PIL.Image.Image`):
             The image to convert to the PIL Image format.
         timeout (`float`, *optional*):
             The timeout value in seconds for the URL request.
@@ -479,6 +480,9 @@ def load_image(
         `PIL.Image.Image`: A PIL Image.
     """
     requires_backends(load_image, ["vision"])
+    if isinstance(image, Path):
+        image = str(image)
+
     if isinstance(image, str):
         if image.startswith("http://") or image.startswith("https://"):
             # We need to actually check for a real protocol, otherwise it's impossible to use a local file
