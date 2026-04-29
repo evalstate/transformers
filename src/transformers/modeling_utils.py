@@ -2403,14 +2403,25 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
 
         if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.ConvTranspose1d, nn.ConvTranspose2d)):
             if getattr(module, "weight", None) is not None:
-                init.normal_(module.weight, mean=0.0, std=std)
-            if module.bias is not None:
+                if module.weight.dtype in (torch.int8, torch.uint8):
+                    logger.debug(
+                        f"Skipping weight initialization for quantized module {module.__class__.__name__} with dtype "
+                        f"{module.weight.dtype}"
+                    )
+                else:
+                    init.normal_(module.weight, mean=0.0, std=std)
+            if module.bias is not None and module.bias.dtype not in (torch.int8, torch.uint8):
                 init.zeros_(module.bias)
         elif isinstance(module, nn.Embedding):
-            init.normal_(module.weight, mean=0.0, std=std)
-            # Here we need the check explicitly, as we slice the weight in the `zeros_` call, so it looses the flag
-            if module.padding_idx is not None and not getattr(module.weight, "_is_hf_initialized", False):
-                init.zeros_(module.weight[module.padding_idx])
+            if module.weight.dtype in (torch.int8, torch.uint8):
+                logger.debug(
+                    f"Skipping weight initialization for quantized embedding with dtype {module.weight.dtype}"
+                )
+            else:
+                init.normal_(module.weight, mean=0.0, std=std)
+                # Here we need the check explicitly, as we slice the weight in the `zeros_` call, so it looses the flag
+                if module.padding_idx is not None and not getattr(module.weight, "_is_hf_initialized", False):
+                    init.zeros_(module.weight[module.padding_idx])
         elif isinstance(module, nn.MultiheadAttention):
             # This uses torch's original init
             module._reset_parameters()
