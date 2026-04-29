@@ -14,6 +14,7 @@
 """Testing suite for the PyTorch SAM3 model."""
 
 import gc
+import platform
 import tempfile
 import unittest
 
@@ -46,8 +47,46 @@ if is_torch_available():
         Sam3VisionConfig,
         Sam3ViTConfig,
     )
-    from transformers.models.sam3.modeling_sam3 import Sam3Model, Sam3VisionModel
+    from transformers.models.sam3.modeling_sam3 import Sam3MaskDecoder, Sam3Model, Sam3VisionModel
     from transformers.models.sam3.processing_sam3 import Sam3Processor
+
+
+@require_torch
+class Sam3MaskDecoderUnitTest(unittest.TestCase):
+    def setUp(self):
+        self.config = Sam3MaskDecoderConfig(hidden_size=32, num_multiscale_features=3, decoder_num_layers=2)
+        self.decoder = Sam3MaskDecoder(self.config)
+        self.device = torch.device("cpu")
+
+    def test_single_scale_forward(self):
+        import torch
+
+        batch_size = 2
+        C, H, W = self.config.hidden_size, 16, 16
+        img_embed = torch.randn(batch_size, C, H, W).to(self.device)
+        decoder_queries = torch.randn(batch_size, 4, C).to(self.device)
+        encoder_hidden_states = torch.randn(batch_size, H * W, C).to(self.device)
+        outputs = self.decoder(
+            decoder_queries,
+            img_embed,
+            encoder_hidden_states=encoder_hidden_states,
+        )
+        self.assertIsNotNone(outputs.pred_masks)
+
+    def test_multi_scale_forward(self):
+        import torch
+
+        batch_size = 2
+        C, H, W = self.config.hidden_size, 16, 16
+        img_embeds = [torch.randn(batch_size, C, H, W).to(self.device) for _ in range(3)]
+        decoder_queries = torch.randn(batch_size, 4, C).to(self.device)
+        encoder_hidden_states = torch.randn(batch_size, H * W, C).to(self.device)
+        outputs = self.decoder(
+            decoder_queries,
+            img_embeds,
+            encoder_hidden_states=encoder_hidden_states,
+        )
+        self.assertIsNotNone(outputs.pred_masks)
 
 
 class Sam3VisionModelTester:
@@ -136,6 +175,9 @@ class Sam3VisionModelTester:
 
 
 @require_torch
+@unittest.skipIf(
+    platform.system() == "Windows", "safetensors serialization is not supported on Windows for this test."
+)
 class Sam3VisionModelTest(ModelTesterMixin, unittest.TestCase):
     """
     Tests for SAM3 Vision Model (ViT backbone + FPN neck).
@@ -378,6 +420,9 @@ class Sam3ModelTester:
 
 
 @require_torch
+@unittest.skipIf(
+    platform.system() == "Windows", "safetensors serialization is not supported on Windows for this test."
+)
 class Sam3ModelTest(ModelTesterMixin, PipelineTesterMixin, unittest.TestCase):
     """
     Tests for SAM3 full model.
