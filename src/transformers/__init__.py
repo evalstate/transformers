@@ -419,6 +419,8 @@ else:
             "MinNewTokensLengthLogitsProcessor",
             "NoBadWordsLogitsProcessor",
             "NoRepeatNGramLogitsProcessor",
+            "PLessLogitsWarper",
+            "PLessNormLogitsWarper",
             "PrefixConstrainedLogitsProcessor",
             "RepetitionPenaltyLogitsProcessor",
             "SequenceBiasLogitsProcessor",
@@ -596,6 +598,8 @@ if TYPE_CHECKING:
     from .generation import MinPLogitsWarper as MinPLogitsWarper
     from .generation import NoBadWordsLogitsProcessor as NoBadWordsLogitsProcessor
     from .generation import NoRepeatNGramLogitsProcessor as NoRepeatNGramLogitsProcessor
+    from .generation import PLessLogitsWarper as PLessLogitsWarper
+    from .generation import PLessNormLogitsWarper as PLessNormLogitsWarper
     from .generation import PrefixConstrainedLogitsProcessor as PrefixConstrainedLogitsProcessor
     from .generation import RepetitionPenaltyLogitsProcessor as RepetitionPenaltyLogitsProcessor
     from .generation import SequenceBiasLogitsProcessor as SequenceBiasLogitsProcessor
