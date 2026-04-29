@@ -112,6 +112,8 @@ else:
                 },
             ),
             ("mobilevitv2", {"torchvision": "MobileViTImageProcessor", "pil": "MobileViTImageProcessorPil"}),
+            ("molmo2", {"torchvision": "Molmo2ImageProcessor"}),
+            ("nougat", {"torchvision": "NougatImageProcessor", "pil": "NougatImageProcessorPil"}),
             ("omdet-turbo", {"torchvision": "DetrImageProcessor", "pil": "DetrImageProcessorPil"}),
             ("paligemma", {"torchvision": "SiglipImageProcessor", "pil": "SiglipImageProcessorPil"}),
             ("penguinvl", {"pil": "PenguinVLImageProcessor", "torchvision": "PenguinVLImageProcessorFast"}),

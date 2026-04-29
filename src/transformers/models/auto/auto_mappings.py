@@ -369,6 +369,8 @@ CONFIG_MAPPING_NAMES = OrderedDict(
         ("modernbert", "ModernBertConfig"),
         ("modernbert-decoder", "ModernBertDecoderConfig"),
         ("modernvbert", "ModernVBertConfig"),
+        ("molmo2", "Molmo2Config"),
+        ("molmo2_text", "Molmo2TextConfig"),
         ("moonshine", "MoonshineConfig"),
         ("moonshine_streaming", "MoonshineStreamingConfig"),
         ("moonshine_streaming_encoder", "MoonshineStreamingEncoderConfig"),
