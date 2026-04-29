@@ -162,7 +162,9 @@ def wrap_model_xla_fsdp(model, args, is_fsdp_xla_v2_enabled):
     return model
 
 
-def save_tpu_checkpoint(model, args, accelerator, processing_class, is_fsdp_xla_v1_enabled, output_dir=None):
+def save_tpu_checkpoint(
+    model, args, accelerator, processing_class, is_fsdp_xla_v1_enabled, is_fsdp_xla_v2_enabled, output_dir=None
+):
     """
     Saves a model checkpoint on TPU/XLA devices.
 
@@ -175,9 +177,12 @@ def save_tpu_checkpoint(model, args, accelerator, processing_class, is_fsdp_xla_
         accelerator (`Accelerator`): The accelerator instance.
         processing_class: The processing class (tokenizer/processor) to save alongside the model.
         is_fsdp_xla_v1_enabled (`bool`): Whether FSDP XLA v1 is enabled.
+        is_fsdp_xla_v2_enabled (`bool`): Whether FSDP XLA v2 is enabled.
         output_dir (`str`, *optional*): The directory to save to. Defaults to `args.output_dir`.
     """
     import torch_xla.core.xla_model as xm
+
+    from ..modeling_utils import unwrap_model
 
     output_dir = output_dir if output_dir is not None else args.output_dir
 
@@ -219,15 +224,16 @@ def save_tpu_checkpoint(model, args, accelerator, processing_class, is_fsdp_xla_
                 logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
                 xm.save(full_state_dict, os.path.join(output_dir, WEIGHTS_NAME))
     elif not isinstance(model, supported_classes):
-        if isinstance(accelerator.unwrap_model(model), supported_classes):
-            accelerator.unwrap_model(model).save_pretrained(
+        unwrapped_model = unwrap_model(model, recursive=is_fsdp_xla_v2_enabled)
+        if isinstance(unwrapped_model, supported_classes):
+            unwrapped_model.save_pretrained(
                 output_dir,
                 is_main_process=args.should_save,
-                state_dict=xm._maybe_convert_to_cpu(model.state_dict()),
+                state_dict=xm._maybe_convert_to_cpu(unwrapped_model.state_dict()),
             )
         else:
             logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
-            state_dict = xm._maybe_convert_to_cpu(model.state_dict())
+            state_dict = xm._maybe_convert_to_cpu(unwrapped_model.state_dict())
             xm.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
     else:
         model.save_pretrained(

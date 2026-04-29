@@ -3849,7 +3849,13 @@ class Trainer:
 
         if is_torch_xla_available():
             save_tpu_checkpoint(
-                self.model, self.args, self.accelerator, self.processing_class, self.is_fsdp_xla_v1_enabled, output_dir
+                self.model,
+                self.args,
+                self.accelerator,
+                self.processing_class,
+                self.is_fsdp_xla_v1_enabled,
+                self.is_fsdp_xla_v2_enabled,
+                output_dir,
             )
         elif is_sagemaker_mp_enabled():
             # Calling the state_dict needs to be done on the wrapped model and on all processes.
