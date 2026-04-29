@@ -111,6 +111,7 @@ from .utils import (
     cached_file,
     check_torch_load_is_safe,
     copy_func,
+    deprecated,
     has_file,
     is_accelerate_available,
     is_bitsandbytes_available,
@@ -2709,6 +2710,16 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
             # Remove from missing if necessary
             if missing_keys is not None and remove_from_missing:
                 missing_keys.discard(target_param_name)
+
+    @deprecated(
+        "5.0.0",
+        message=(
+            "`tie_embeddings_and_encoder_decoder` was renamed to `tie_weights` in Transformers v5. "
+            "Please update your code."
+        ),
+    )
+    def tie_embeddings_and_encoder_decoder(self, *args, **kwargs):
+        return self.tie_weights(*args, **kwargs)
 
     def _adjust_bias(self, output_embeddings, input_embeddings):
         if getattr(output_embeddings, "bias", None) is not None and hasattr(output_embeddings, "weight"):
