@@ -1848,7 +1848,35 @@ class GenerationMixin(ContinuousMixin):
                 "parameters explicitly, but not both.",
             )
 
+        # Safety: if the model is sharded across multiple devices (hf_device_map/device_map) and we are
+        # doing sampling, enable `remove_invalid_values` by default to avoid NaN/Inf logits causing CUDA
+        # asserts during multinomial sampling. Users can still override this by passing the flag explicitly.
+        try:
+            is_sharded_map = False
+            hf_map = getattr(self, "hf_device_map", None)
+            if hf_map is not None and isinstance(hf_map, dict) and len(set(hf_map.values())) > 1:
+                devices = set(hf_map.values())
+                gpu_devices = {d for d in devices if d not in {"cpu", "disk"}}
+                if len(gpu_devices) > 1:
+                    is_sharded_map = True
+
+            device_map_attr = getattr(self, "device_map", None)
+            if not is_sharded_map and isinstance(device_map_attr, dict) and len(set(device_map_attr.values())) > 1:
+                devices = set(device_map_attr.values())
+                gpu_devices = {d for d in devices if d not in {"cpu", "disk"}}
+                if len(gpu_devices) > 1:
+                    is_sharded_map = True
+
+            if is_sharded_map and generation_config.do_sample and generation_config.remove_invalid_values is False:
+                generation_config.remove_invalid_values = True
+                logger.info(
+                    "Enabling `remove_invalid_values=True` for sharded sampling to avoid NaN/Inf logits during sampling."
+                )
+        except Exception as exception:
+            logger.debug("Skipping sharded sampling invalid-value guard", exc_info=exception)
+
         # Finally keep output_xxx args in `model_kwargs` so it can be passed to `forward`
+
         output_attentions = generation_config.output_attentions
         output_hidden_states = generation_config.output_hidden_states
         model_kwargs.update({"output_attentions": output_attentions} if output_attentions else {})
