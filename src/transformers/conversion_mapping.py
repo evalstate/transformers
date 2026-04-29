@@ -128,7 +128,11 @@ def _build_checkpoint_conversion_mapping():
             WeightRenaming(source_patterns=r"^multi_modal_projector", target_patterns="model.multi_modal_projector"),
             WeightRenaming(source_patterns=r"^image_newline", target_patterns="model.image_newline"),
         ],
-        "clip_vision_model": [PrefixChange(prefix_to_remove="vision_model")],
+        "clip_vision_model": [
+            PrefixChange(prefix_to_remove="vision_model"),
+            # Keep old CLIP-like checkpoints loadable after fixing the historical typo in module names.
+            WeightRenaming(source_patterns=r"layrnorm", target_patterns="layernorm"),
+        ],
         "clip_text_model": [PrefixChange(prefix_to_remove="text_model")],
         "VideoLlavaModel": [
             WeightRenaming(source_patterns=r"^language_model.model", target_patterns="language_model"),
