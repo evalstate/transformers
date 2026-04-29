@@ -2416,9 +2416,9 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
             std = getattr(self.config.get_text_config(), "initializer_range", 0.02)
 
         if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.ConvTranspose1d, nn.ConvTranspose2d)):
-            if getattr(module, "weight", None) is not None:
+            if getattr(module, "weight", None) is not None and module.weight.is_floating_point():
                 init.normal_(module.weight.float(), mean=0.0, std=std)
-            if module.bias is not None:
+            if module.bias is not None and module.bias.is_floating_point():
                 init.zeros_(module.bias)
         elif isinstance(module, nn.LSTM):
             for name, param in module.named_parameters():
@@ -2427,10 +2427,11 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
                 elif "bias" in name:
                     init.constant_(param, 0.0)
         elif isinstance(module, nn.Embedding):
-            init.normal_(module.weight, mean=0.0, std=std)
-            # Here we need the check explicitly, as we slice the weight in the `zeros_` call, so it looses the flag
-            if module.padding_idx is not None and not getattr(module.weight, "_is_hf_initialized", False):
-                init.zeros_(module.weight[module.padding_idx])
+            if module.weight.is_floating_point():
+                init.normal_(module.weight, mean=0.0, std=std)
+                # Here we need the check explicitly, as we slice the weight in the `zeros_` call, so it looses the flag
+                if module.padding_idx is not None and not getattr(module.weight, "_is_hf_initialized", False):
+                    init.zeros_(module.weight[module.padding_idx])
         elif isinstance(module, nn.MultiheadAttention):
             # This uses torch's original init
             module._reset_parameters()
