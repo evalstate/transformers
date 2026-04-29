@@ -722,6 +722,7 @@ class KosmosTextAttention(nn.Module):
         encoder_hidden_states: torch.Tensor | None = None,
         past_key_values: Cache | None = None,
         attention_mask: torch.Tensor | None = None,
+        is_causal: bool | None = None,
         **kwargs,
     ) -> tuple[torch.Tensor, torch.Tensor | None, Cache | None]:
         """Input shape: Batch x Time x Channel"""
@@ -776,6 +777,7 @@ class KosmosTextAttention(nn.Module):
             attention_mask,
             dropout=0.0 if not self.training else self.dropout,
             scaling=self.scaling,
+            is_causal=self.is_causal if is_causal is None else is_causal,
             **kwargs,
         )
 
@@ -1346,6 +1348,7 @@ class Kosmos2ImageToTextProjection(nn.Module):
             encoder_hidden_states=key_value_states,
             past_key_values=None,
             attention_mask=None,
+            is_causal=False,
             output_attentions=None,
         )
 
