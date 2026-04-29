@@ -120,6 +120,7 @@ class PeVideoConfig(PreTrainedConfig):
 
     text_config: dict | PreTrainedConfig | None = None
     video_config: dict | PreTrainedConfig | None = None
+    tie_word_embeddings: bool = True
 
     def __post_init__(self, **kwargs):
         if isinstance(self.text_config, dict):

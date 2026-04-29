@@ -394,6 +394,16 @@ def _build_checkpoint_conversion_mapping():
             PrefixChange(prefix_to_remove="model", model_prefix="vlm"),
             WeightRenaming(source_patterns=r"vlm(?!\.(language_model|visual))", target_patterns="vlm.language_model"),
         ],
+        "pe_audio_video_encoder": [
+            WeightRenaming(
+                source_patterns=r"audio_model\.audio_encoder\.(.+)",
+                target_patterns=r"embedder.audio_encoder.\1",
+            ),
+            WeightRenaming(
+                source_patterns=r"video_model\.video_encoder\.(.+)",
+                target_patterns=r"embedder.video_encoder.\1",
+            ),
+        ],
         "timm_wrapper": [PrefixChange(prefix_to_add="timm_model")],
         "pi0": [
             WeightRenaming(source_patterns=r"state_proj", target_patterns="embed_action_time.state_proj"),
