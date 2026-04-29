@@ -1218,3 +1218,22 @@ class TestSentenceOrderPrediction(DataCollatorTestMixin, unittest.TestCase):
         for return_tensors in ["pt", "np"]:
             collator = DataCollatorForLanguageModeling(tokenizer, return_tensors=return_tensors)
             self._check_immutability(collator, self._get_features())
+
+
+@require_torch
+class TestDataCollatorWithFlatteningIntegerLabels(DataCollatorTestMixin, unittest.TestCase):
+    def test_integer_labels_are_broadcast(self):
+        from transformers import DataCollatorWithFlattening
+
+        features = [
+            {"input_ids": [0, 1, 2, 3], "labels": 1},
+            {"input_ids": [4, 5, 6], "labels": 0},
+        ]
+
+        collator = DataCollatorWithFlattening(return_tensors="pt")
+        batch = collator(features)
+
+        expected_input_ids = torch.tensor([[0, 1, 2, 3, 4, 5, 6]])
+        expected_labels = torch.tensor([[1, 1, 1, 1, 0, 0, 0]])
+        self.assertTrue(torch.equal(batch["input_ids"], expected_input_ids))
+        self.assertTrue(torch.equal(batch["labels"], expected_labels))

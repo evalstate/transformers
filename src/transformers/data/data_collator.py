@@ -1426,7 +1426,10 @@ class DataCollatorWithFlattening(DefaultDataCollator):
                 # Convert to list if tensor
                 if hasattr(labels, "tolist"):
                     labels = labels.tolist()
-                batch["labels"] += [separator_id] + labels[1:]
+                if isinstance(labels, (list, tuple)):
+                    batch["labels"] += [separator_id] + labels[1:]
+                else:
+                    batch["labels"] += [labels] * len(input_ids)
             else:
                 batch["labels"] += [separator_id] + input_ids[1:]
             if self.return_position_ids:
