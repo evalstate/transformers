@@ -1462,7 +1462,7 @@ class Trainer:
         if isinstance(resume_from_checkpoint, bool) and resume_from_checkpoint:
             resume_from_checkpoint = get_last_checkpoint(args.output_dir)
             if resume_from_checkpoint is None:
-                raise ValueError(f"No valid checkpoint found in output directory ({args.output_dir})")
+                logger.info(f"No valid checkpoint found in output directory ({args.output_dir})")
 
         if resume_from_checkpoint is not None:
             # Load model checkpoint before accelerator.prepare() for regular models,
@@ -3289,7 +3289,9 @@ class Trainer:
             run_dir = self.args.output_dir
         return run_dir
 
-    def _save_checkpoint(self, model: nn.Module, trial: "optuna.Trial | dict[str, Any] | None") -> None:
+    def _save_checkpoint(
+        self, model: nn.Module, trial: "optuna.Trial | dict[str, Any] | None", save_latest: bool = True
+    ) -> None:
         """Save model checkpoint, optimizer, scheduler, scaler, RNG states, and trainer state."""
         # In all cases, including ddp/dp/deepspeed, self.model is always a reference to the model we
         # want to save except FullyShardedDDP.
@@ -3357,6 +3359,10 @@ class Trainer:
                 best_model_checkpoint=self.state.best_model_checkpoint,
                 use_mtime=True,
             )
+
+        if save_latest and self.is_world_process_zero():
+            with open(os.path.join(run_dir, "latest"), "w") as fd:
+                fd.write(checkpoint_folder)
 
     def _determine_best_metric(self, metrics: dict[str, float], trial: "optuna.Trial | dict[str, Any] | None") -> bool:
         """
