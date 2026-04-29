@@ -94,6 +94,7 @@ else:
             ("got_ocr2", "GotOcr2Processor"),
             ("granite4_vision", "Granite4VisionProcessor"),
             ("granite_speech", "GraniteSpeechProcessor"),
+            ("granite_speech_plus", "GraniteSpeechProcessor"),
             ("grounding-dino", "GroundingDinoProcessor"),
             ("groupvit", "CLIPProcessor"),
             ("higgs_audio_v2", "HiggsAudioV2Processor"),
