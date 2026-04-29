@@ -357,12 +357,6 @@ class AutomaticSpeechRecognitionPipeline(ChunkPipeline):
         stride = None
         extra = {}
 
-        if is_torch_available():
-            import torch
-
-            if isinstance(inputs, torch.Tensor):
-                inputs = inputs.cpu().numpy()
-
         if is_torchcodec_available() and type(inputs).__module__.startswith("torchcodec."):
             import torchcodec
 
@@ -395,6 +389,8 @@ class AutomaticSpeechRecognitionPipeline(ChunkPipeline):
             extra = inputs
             inputs = _inputs
             if in_sampling_rate != self.feature_extractor.sampling_rate:
+                import torch
+
                 if is_torchaudio_available():
                     from torchaudio import functional as F
                 else:
@@ -420,7 +416,14 @@ class AutomaticSpeechRecognitionPipeline(ChunkPipeline):
                 # can add extra data in the inputs, so we need to keep track
                 # of the original length in the stride so we can cut properly.
                 stride = (inputs.shape[0], int(round(stride[0] * ratio)), int(round(stride[1] * ratio)))
-        if not isinstance(inputs, (np.ndarray, torch.Tensor)):
+
+        if is_torch_available():
+            import torch
+
+            if isinstance(inputs, torch.Tensor):
+                inputs = inputs.cpu().numpy()
+
+        if not isinstance(inputs, np.ndarray):
             raise TypeError(f"We expect a numpy ndarray or torch tensor as input, got `{type(inputs)}`")
         if inputs.ndim != 1:
             logger.warning(
