@@ -81,7 +81,7 @@ class GPT2Config(PreTrainedConfig):
     n_layer: int = 12
     n_head: int = 12
     n_inner: int | None = None
-    activation_function: str = "gelu_new"
+    activation_function: str = "gelu"
     resid_pdrop: float | int = 0.1
     embd_pdrop: float | int = 0.1
     attn_pdrop: float | int = 0.1
