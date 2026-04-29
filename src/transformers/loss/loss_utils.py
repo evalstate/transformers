@@ -15,6 +15,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn import BCEWithLogitsLoss, MSELoss
 
 from .loss_d_fine import DFineForObjectDetectionLoss
@@ -52,11 +53,21 @@ def ForCausalLMLoss(
     logits,
     labels,
     vocab_size: int,
+    hidden_states: torch.Tensor | None = None,
+    lm_head_weight: torch.Tensor | None = None,
+    logits_to_keep: int | None = None,
     num_items_in_batch: torch.Tensor | None = None,
     ignore_index: int = -100,
     shift_labels: torch.Tensor | None = None,
     **kwargs,
 ) -> torch.Tensor:
+    if hidden_states is not None and lm_head_weight is not None:
+        slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep
+        logits = F.linear(
+            hidden_states[:, slice_indices, :],
+            lm_head_weight,
+        )
+
     if shift_labels is None:
         # Shift so that tokens < n predict n
         labels = nn.functional.pad(labels, (0, 1), value=ignore_index)
@@ -73,7 +84,6 @@ def ForCausalLMLoss(
     shift_labels = shift_labels.to(logits.device)
     loss = fixed_cross_entropy(logits, shift_labels, num_items_in_batch, ignore_index, **kwargs)
     return loss
-
 
 def ForMaskedLMLoss(
     logits: torch.Tensor,
