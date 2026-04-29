@@ -399,7 +399,12 @@ def accelerate_dispatch(model, hf_quantizer, device_map, offload_folder, offload
     ):
         device_map_kwargs["offload_buffers"] = True
 
-    if not is_fsdp_enabled() and not is_deepspeed_zero3_enabled():
+    is_quantized_bnb = (
+        hf_quantizer is not None
+        and hf_quantizer.quantization_config.quant_method == QuantizationMethod.BITS_AND_BYTES
+    )
+
+    if not is_fsdp_enabled() and not is_deepspeed_zero3_enabled() and not is_quantized_bnb:
         dispatch_model(model, **device_map_kwargs)
 
 
