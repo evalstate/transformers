@@ -1246,10 +1246,20 @@ class SamHQModel(SamHQPreTrainedModel):
         config.mask_decoder_config._attn_implementation = config._attn_implementation
 
         self.mask_decoder = SamHQMaskDecoder(config.mask_decoder_config)
+
+        # Share positional embeddings, matching the original SAM-HQ architecture.
+        self.prompt_encoder.shared_embedding = self.shared_image_embedding
+
         self.post_init()
 
     def get_input_embeddings(self):
         return self.vision_encoder.get_input_embeddings()
+
+    def get_expanded_tied_weights_keys(self, all_submodels: bool = False) -> dict:
+        # The default implementation only enables tying for language-model embeddings.
+        if self._tied_weights_keys is None:
+            return {}
+        return self._tied_weights_keys.copy()
 
     def get_image_wide_positional_embeddings(self):
         size = self.config.prompt_encoder_config.image_embedding_size
