@@ -15,11 +15,12 @@
 import importlib.util
 import os
 import sys
+import warnings
 from pathlib import Path
 
 import pytest
 
-from transformers import dynamic_module_utils
+from transformers import AutoConfig, dynamic_module_utils
 from transformers.dynamic_module_utils import custom_object_save, get_cached_module_file, get_imports
 
 
@@ -229,3 +230,24 @@ def test_get_cached_module_file_local_cache_key_keeps_hash_stable_with_different
     assert cached_module_a.parent.parent.name == "alpha_subdir"
     assert cached_module_b.parent.parent.name == "beta_subdir"
     assert cached_module_a.parent.name == cached_module_b.parent.name
+
+
+def test_local_path_with_and_without_trailing_slash(tmp_path):
+    model_dir = tmp_path / "my_model"
+    model_dir.mkdir()
+    config_path = model_dir / "config.json"
+    config_path.write_text('{"model_type": "bert"}')
+    path_no_slash = str(model_dir)
+    path_with_slash = str(model_dir) + os.sep
+
+    with warnings.catch_warnings(record=True) as w1:
+        warnings.simplefilter("always")
+        cfg1 = AutoConfig.from_pretrained(path_no_slash)
+
+    with warnings.catch_warnings(record=True) as w2:
+        warnings.simplefilter("always")
+        cfg2 = AutoConfig.from_pretrained(path_with_slash)
+
+    assert isinstance(cfg1, type(cfg2))
+    assert len(w1) == 0
+    assert len(w2) == 0
