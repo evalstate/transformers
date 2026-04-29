@@ -2053,6 +2053,10 @@ class GenerationMixin(ContinuousMixin):
         generation_config._pad_token_tensor = pad_token_tensor
         generation_config._decoder_start_token_tensor = decoder_start_token_tensor
 
+    def _is_dynamo_compilation_disabled(self) -> bool:
+        """Check standard environment variables that explicitly disable torch.dynamo compilation."""
+        return os.getenv("TORCHDYNAMO_DISABLE", "").lower() in {"1", "true", "yes", "on"}
+
     def _valid_auto_compile_criteria(
         self: "GenerativePreTrainedModel", model_kwargs: dict[str, Any], generation_config: GenerationConfig
     ) -> bool:
@@ -2061,6 +2065,9 @@ class GenerationMixin(ContinuousMixin):
         """
         # Override: honor `disable_compile` flag
         if generation_config.disable_compile:
+            return False
+
+        if self._is_dynamo_compilation_disabled():
             return False
 
         cache = model_kwargs.get("past_key_values", model_kwargs.get("cache_params"))
