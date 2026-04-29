@@ -4215,8 +4215,9 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         if "experts_implementation" in kwargs:
             config._experts_implementation = kwargs.pop("experts_implementation")
 
+        custom_hf_quantizer = model_kwargs.pop("hf_quantizer", None)
         hf_quantizer, config, device_map = get_hf_quantizer(
-            config, quantization_config, device_map, weights_only, user_agent
+            config, quantization_config, device_map, weights_only, user_agent, custom_hf_quantizer
         )
 
         if gguf_file:
