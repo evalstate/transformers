@@ -1433,10 +1433,17 @@ class Trainer:
             # Deepspeed/FSDP models are loaded after prepare in _prepare_for_training.
             if not is_sagemaker_mp_enabled() and not self.is_deepspeed_enabled and not self.is_fsdp_enabled:
                 self._load_from_checkpoint(resume_from_checkpoint)
-            state = TrainerState.load_from_json(os.path.join(resume_from_checkpoint, TRAINER_STATE_NAME))
-            if state.train_batch_size is not None and args.auto_find_batch_size:
-                # Only restore the checkpoint's train_batch_size when using auto_find_batch_size,
-                self._train_batch_size = state.train_batch_size
+            state_path = os.path.join(resume_from_checkpoint, TRAINER_STATE_NAME)
+            if os.path.isfile(state_path):
+                state = TrainerState.load_from_json(state_path)
+                if state.train_batch_size is not None and args.auto_find_batch_size:
+                    # Only restore the checkpoint's train_batch_size when using auto_find_batch_size,
+                    self._train_batch_size = state.train_batch_size
+            else:
+                logger.warning(
+                    f"TrainerState file not found at {state_path}. "
+                    "Training will continue, but batch size recovery is skipped."
+                )
 
         inner_training_loop = find_executable_batch_size(
             self._inner_training_loop, self._train_batch_size, args.auto_find_batch_size
