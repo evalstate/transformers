@@ -47,8 +47,11 @@ def initialize_tensor_parallelism(
     """
     if tp_size is not None and tp_plan is None:
         raise ValueError("tp_plan has to be set when tp_size is passed.")
-    if tp_plan is not None and device_map is not None:
-        raise ValueError("`tp_plan` and `device_map` are mutually exclusive. Choose either one for parallelization.")
+    if tp_plan is not None and device_map is not None and device_map != "meta" and device_mesh is None:
+        raise ValueError(
+            "`tp_plan` and `device_map` are mutually exclusive. "
+            "Choose either one for parallelization or include a `device_mesh`."
+        )
     if device_mesh is None:
         if not is_torch_greater_or_equal("2.5"):
             raise OSError("Tensor parallel is only supported for `torch>=2.5`.")
@@ -98,7 +101,8 @@ def initialize_tensor_parallelism(
                 )
             device_mesh = device_mesh["tp"]
         tp_size = device_mesh.size()
-        device_map = torch.device(f"{device_mesh.device_type}:{int(os.environ['LOCAL_RANK'])}")
+        if device_map is None:
+            device_map = torch.device(f"{device_mesh.device_type}:{int(os.environ['LOCAL_RANK'])}")
 
     return device_map, device_mesh, tp_size
 
