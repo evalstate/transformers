@@ -837,6 +837,23 @@ def _build_checkpoint_conversion_mapping():
         WeightRenaming("mlp.shared_expert.", "mlp.shared_experts."),
     ]
 
+    mapping["PenguinVLModel"] = [
+        WeightRenaming(r"^vision_encoder\.vision_encoder\.", "vision_model."),
+        WeightRenaming(r"^vision_encoder\.", "vision_model."),
+        WeightRenaming(r"^vision_projector\.", "projector."),
+        WeightRenaming(r"^embed_tokens\.", "language_model.embed_tokens."),
+        WeightRenaming(r"^layers\.", "language_model.layers."),
+        WeightRenaming(r"^norm\.", "language_model.norm."),
+    ]
+    mapping["PenguinVLForConditionalGeneration"] = [
+        WeightRenaming(r"^model\.vision_encoder\.vision_encoder\.", "model.vision_model."),
+        WeightRenaming(r"^model\.vision_encoder\.", "model.vision_model."),
+        WeightRenaming(r"^model\.vision_projector\.", "model.projector."),
+        WeightRenaming(r"^model\.embed_tokens\.", "model.language_model.embed_tokens."),
+        WeightRenaming(r"^model\.layers\.", "model.language_model.layers."),
+        WeightRenaming(r"^model\.norm\.", "model.language_model.norm."),
+    ]
+
     for model_type, base_pattern in _MODEL_TO_CONVERSION_PATTERN.items():
         if model_type in mapping:
             continue

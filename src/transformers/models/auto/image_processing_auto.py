@@ -114,6 +114,7 @@ else:
             ("mobilevitv2", {"torchvision": "MobileViTImageProcessor", "pil": "MobileViTImageProcessorPil"}),
             ("omdet-turbo", {"torchvision": "DetrImageProcessor", "pil": "DetrImageProcessorPil"}),
             ("paligemma", {"torchvision": "SiglipImageProcessor", "pil": "SiglipImageProcessorPil"}),
+            ("penguinvl", {"pil": "PenguinVLImageProcessor", "torchvision": "PenguinVLImageProcessorFast"}),
             ("pixio", {"torchvision": "BitImageProcessor", "pil": "BitImageProcessorPil"}),
             ("pp_ocrv5_mobile_det", {"torchvision": "PPOCRV5ServerDetImageProcessor"}),
             ("pp_ocrv5_mobile_rec", {"torchvision": "PPOCRV5ServerRecImageProcessor"}),

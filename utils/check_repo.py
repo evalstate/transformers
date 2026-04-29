@@ -281,6 +281,8 @@ IGNORE_NON_TESTED = (
         "PeAudioVideoModel",
         "VibeVoiceAcousticTokenizerEncoderModel",  # Tested through VibeVoiceAcousticTokenizerModel
         "VibeVoiceAcousticTokenizerDecoderModel",  # Tested through VibeVoiceAcousticTokenizerModel
+        "PenguinVLModel",  # Building part of bigger (tested) model. Tested implicitly through PenguinVLForConditionalGeneration.
+        "PenguinVLLanguageModel",  # Building part of bigger (tested) model. Tested implicitly through PenguinVLForConditionalGeneration.
         "PI0Model",  # special arch, tested through PI0ForConditionalGeneration
         "UVDocBridge",  # Building part of a bigger model, tested implicitly through UVDocModel
         "Gemma4VisionModel",  # Building part of a bigger model, tested implicitly
@@ -515,6 +517,7 @@ IGNORE_NON_AUTO_CONFIGURED = PRIVATE_MODELS.copy() + [
     "Ernie4_5_VL_MoeForConditionalGeneration",  # BC Alias
     "Ernie4_5_VL_MoeModel",  # BC Alias
     "Ernie4_5_VL_MoeTextModel",  # BC Alias
+    "PenguinVLLanguageModel",  # Building part of a bigger model
     "UVDocBridge",  # Building part of a bigger model, tested implicitly through UVDocModel
     "Granite4VisionTextModel",  # Building part of bigger (tested) model.
 ]

@@ -323,6 +323,7 @@ if TYPE_CHECKING:
     from .pe_video import *
     from .pegasus import *
     from .pegasus_x import *
+    from .penguinvl import *
     from .perceiver import *
     from .perception_lm import *
     from .persimmon import *

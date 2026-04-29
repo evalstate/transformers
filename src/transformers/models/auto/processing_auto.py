@@ -140,6 +140,7 @@ else:
             ("owlvit", "OwlViTProcessor"),
             ("paddleocr_vl", "PaddleOCRVLProcessor"),
             ("paligemma", "PaliGemmaProcessor"),
+            ("penguinvl", "PenguinVLProcessor"),
             ("perception_lm", "PerceptionLMProcessor"),
             ("phi4_multimodal", "Phi4MultimodalProcessor"),
             ("pi0", "PI0Processor"),
