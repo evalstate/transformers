@@ -81,12 +81,12 @@ class MixtralExperts(nn.Module):
         with torch.no_grad():
             expert_mask = torch.nn.functional.one_hot(top_k_index, num_classes=self.num_experts)
             expert_mask = expert_mask.permute(2, 1, 0)
-            expert_hit = torch.greater(expert_mask.sum(dim=(-1, -2)), 0).nonzero()
+            expert_hit = torch.greater(expert_mask.sum(dim=(-1, -2)), 0).nonzero() if self.training else None
 
-        for expert_idx in expert_hit:
-            expert_idx = expert_idx[0]
-            if expert_idx == self.num_experts:
-                continue
+        expert_indices = expert_hit if self.training else range(self.num_experts)
+        for expert_idx in expert_indices:
+            if self.training:
+                expert_idx = expert_idx[0]
             top_k_pos, token_idx = torch.where(expert_mask[expert_idx])
             current_state = hidden_states[token_idx]
             gate, up = nn.functional.linear(current_state, self.gate_up_proj[expert_idx]).chunk(2, dim=-1)
