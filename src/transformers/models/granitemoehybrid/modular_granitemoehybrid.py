@@ -23,7 +23,7 @@ from ...masking_utils import create_causal_mask
 from ...modeling_outputs import BaseModelOutputWithPast, MoeModelOutputWithPast
 from ...modeling_utils import ALL_ATTENTION_FUNCTIONS
 from ...processing_utils import Unpack
-from ...utils import TransformersKwargs, auto_docstring, logging
+from ...utils import TransformersKwargs, auto_docstring, is_torchdynamo_compiling, logging
 from ...utils.generic import merge_with_config_defaults
 from ...utils.output_capturing import capture_outputs
 from ..bamba.configuration_bamba import BambaConfig
@@ -275,8 +275,9 @@ class GraniteMoeHybridModel(GraniteMoeSharedModel):
             2. Attending to all inputs
         """
         mamba_mask = attention_mask
-        if (past_key_values is not None and past_key_values.has_previous_state()) or (
-            attention_mask is not None and torch.all(attention_mask == 1)
+        if not is_torchdynamo_compiling() and (
+            (past_key_values is not None and past_key_values.has_previous_state())
+            or (attention_mask is not None and torch.all(attention_mask == 1))
         ):
             mamba_mask = None
         return mamba_mask
