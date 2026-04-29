@@ -28,7 +28,7 @@ from ... import initialization as init
 from ...activations import ACT2FN
 from ...cache_utils import Cache
 from ...configuration_utils import PreTrainedConfig
-from ...integrations.flex_attention import compile_friendly_flex_attention
+from ...integrations.flex_attention import compile_friendly_flex_attention, get_flex_attention_lse_kwargs
 from ...modeling_layers import GradientCheckpointingLayer
 from ...modeling_outputs import MoeCausalLMOutputWithPast, MoeModelOutputWithPast
 from ...modeling_rope_utils import RopeParameters
@@ -179,9 +179,7 @@ def flex_attention_forward(
         block_mask=block_mask,
         enable_gqa=True,
         scale=scaling,
-        # Last time checked on PyTorch == 2.5.1: Flex Attention always computes the lse regardless.
-        # For simplification, we thus always return it as no additional computations are introduced.
-        return_lse=True,
+        **get_flex_attention_lse_kwargs(True),
     )
     # lse is returned in float32
     attention_weights = attention_weights.to(value.dtype)
