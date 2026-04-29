@@ -216,6 +216,7 @@ class SpeechT5Config(PreTrainedConfig):
                 f" `len(config.conv_kernel) = {len(self.conv_kernel)}`."
             )
 
+    @property
     def inputs_to_logits_ratio(self):
         return functools.reduce(operator.mul, self.conv_stride, 1)
 
