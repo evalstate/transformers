@@ -138,6 +138,7 @@ class T5GemmaConfig(PreTrainedConfig):
     attention_dropout: float | int = 0.0
     tie_word_embeddings: bool = True
     vocab_size: int = 256000
+    num_hidden_layers: int | None = None
 
     def __post_init__(self, **kwargs):
         if isinstance(self.encoder, dict):
@@ -161,6 +162,8 @@ class T5GemmaConfig(PreTrainedConfig):
         self.decoder.cross_attention_hidden_size = self.encoder.hidden_size
 
         self.initializer_range = kwargs.pop("initializer_range", self.decoder.initializer_range)
+        if self.num_hidden_layers is None:
+            self.num_hidden_layers = self.decoder.num_hidden_layers
 
         for special_token_key in ["bos_token_id", "pad_token_id", "eos_token_id"]:
             if special_token_key not in kwargs:
