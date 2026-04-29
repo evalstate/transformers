@@ -404,6 +404,14 @@ class Trainer:
             output_dir = "tmp_trainer"
             logger.info(f"No `TrainingArguments` passed, using `output_dir={output_dir}`.")
             args = TrainingArguments(output_dir=output_dir)
+
+        # Fixes issues 28530 + 40217: automatic label detection expects labels when a single label is provided.
+        if args.label_names == ["label"]:
+            logger.warning(
+                "Setting label_names=['label'] is redundant and may cause issues. "
+                "Removing it to use automatic label detection."
+            )
+            args.label_names = None
         self.args = args
         # Seed must be set before instantiating the model when using model_init
         enable_full_determinism(self.args.seed) if self.args.full_determinism else set_seed(self.args.seed)
