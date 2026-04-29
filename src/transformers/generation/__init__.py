@@ -96,6 +96,16 @@ else:
         "PrefillFirstScheduler",
         "Scheduler",
     ]
+    _import_structure["safety"] = [
+        "SafetyChecker",
+        "SafetyResult",
+        "SafetyViolation",
+        "SafetyMetrics",
+        "SafetyState",
+        "SafetyConfig",
+        "SafetyLogitsProcessor",
+        "SafetyStoppingCriteria",
+    ]
     _import_structure["utils"] = [
         "GenerationMixin",
         "GenerateBeamDecoderOnlyOutput",
