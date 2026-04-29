@@ -120,7 +120,12 @@ class RunCompressedTest(unittest.TestCase):
         gc.collect()
 
     def test_default_run_compressed__True(self):
-        from compressed_tensors import QuantizationStatus
+        from compressed_tensors import __version__ as ct_version
+        from compressed_tensors.quantization import QuantizationStatus
+        from packaging import version
+
+        if version.parse(ct_version) >= version.parse("0.14"):
+            self.skipTest("CompressedLinear removed in CT >= 0.14")
 
         for stub in self.stubs:
             model = AutoModelForCausalLM.from_pretrained(
@@ -134,9 +139,7 @@ class RunCompressedTest(unittest.TestCase):
             assert compressed_count > 0
 
     def test_default_run_compressed__False(self):
-        from compressed_tensors import QuantizationStatus
-
-        from transformers.utils.quantization_config import CompressedTensorsConfig
+        from compressed_tensors.quantization import QuantizationStatus
 
         quantization_config = CompressedTensorsConfig(run_compressed=False)
 
@@ -152,8 +155,34 @@ class RunCompressedTest(unittest.TestCase):
             # No modules should be in COMPRESSED state
             assert compressed_count == 0
 
+    def test_model_decompressed_after_loading(self):
+        """Verify that models are properly decompressed after loading for CT >= 0.14"""
+        from compressed_tensors import __version__ as ct_version
+        from compressed_tensors.quantization import QuantizationStatus
+        from packaging import version
+
+        if version.parse(ct_version) < version.parse("0.14"):
+            self.skipTest("Automatic decompression only applies to CT >= 0.14")
+
+        for stub in self.stubs:
+            model = AutoModelForCausalLM.from_pretrained(stub)
+            compressed_count = sum(
+                1 for m in model.modules() if getattr(m, "quantization_status", None) == QuantizationStatus.COMPRESSED
+            )
+            assert compressed_count == 0
+
     def test_run_compressed_outputs_match(self):
         """Check that run_compressed=True/False output are the same"""
+        from compressed_tensors import __version__ as ct_version
+        from packaging import version
+
+        if version.parse(ct_version) >= version.parse("0.14"):
+            self.skipTest("run_compressed no longer applies for CT >= 0.14")
+
+        try:
+            from compressed_tensors.linear.compressed_linear import CompressedLinear  # noqa: F401
+        except ImportError:
+            self.skipTest("CompressedLinear not available in this version of compressed-tensors")
 
         from transformers import AutoTokenizer
         from transformers.utils.quantization_config import CompressedTensorsConfig
