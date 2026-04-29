@@ -343,6 +343,19 @@ class TestDataCollatorWithFlattening(DataCollatorTestMixin, unittest.TestCase):
         batch = collator(features)
         self.assertEqual(batch["labels"].shape, (1, 5))
 
+    def test_integer_labels(self):
+        """Test flattening broadcasts integer labels by default."""
+        features = [
+            {"input_ids": [1, 2, 3], "labels": 0},
+            {"input_ids": [4, 5], "labels": 1},
+        ]
+        collator = DataCollatorWithFlattening(return_tensors="pt")
+        batch = collator(features)
+
+        self.assertEqual(batch["input_ids"].shape, (1, 5))
+        self.assertEqual(batch["labels"].shape, (1, 5))
+        self.assertEqual(batch["labels"].tolist(), [[0, 0, 0, 1, 1]])
+
     def test_numpy_output(self):
         """Test flattening with NumPy output."""
         collator = DataCollatorWithFlattening(return_tensors="np")
