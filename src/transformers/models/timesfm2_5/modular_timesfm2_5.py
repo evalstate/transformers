@@ -110,8 +110,8 @@ class TimesFm2_5Config(TimesFmConfig):
     max_timescale = AttributeError()
 
 
-@dataclass
 @auto_docstring
+@dataclass
 class TimesFm2_5Output(TimesFmOutput):
     r"""
     context_mu (`torch.Tensor` of shape `(batch_size, num_patches)`):
@@ -124,8 +124,8 @@ class TimesFm2_5Output(TimesFmOutput):
     context_sigma: torch.Tensor | None = None
 
 
-@dataclass
 @auto_docstring
+@dataclass
 class TimesFm2_5OutputForPrediction(TimesFmOutputForPrediction):
     r"""
     mean_predictions (`torch.Tensor` of shape `(batch_size, horizon_length)`):

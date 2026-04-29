@@ -38,12 +38,12 @@ logger = logging.get_logger(__name__)
 ##########
 
 
-@dataclass
 @auto_docstring(
     custom_intro="""
     Class for outputs of [`DPRQuestionEncoder`].
     """
 )
+@dataclass
 class DPRContextEncoderOutput(ModelOutput):
     r"""
     pooler_output (`torch.FloatTensor` of shape `(batch_size, embeddings_size)`):
@@ -57,12 +57,12 @@ class DPRContextEncoderOutput(ModelOutput):
     attentions: tuple[torch.FloatTensor, ...] | None = None
 
 
-@dataclass
 @auto_docstring(
     custom_intro="""
     Class for outputs of [`DPRQuestionEncoder`].
     """
 )
+@dataclass
 class DPRQuestionEncoderOutput(ModelOutput):
     r"""
     pooler_output (`torch.FloatTensor` of shape `(batch_size, embeddings_size)`):
@@ -76,12 +76,12 @@ class DPRQuestionEncoderOutput(ModelOutput):
     attentions: tuple[torch.FloatTensor, ...] | None = None
 
 
-@dataclass
 @auto_docstring(
     custom_intro="""
     Class for outputs of [`DPRQuestionEncoder`].
     """
 )
+@dataclass
 class DPRReaderOutput(ModelOutput):
     r"""
     start_logits (`torch.FloatTensor` of shape `(n_passages, sequence_length)`):

@@ -42,8 +42,8 @@ from .configuration_timesfm import TimesFmConfig
 logger = logging.get_logger(__name__)
 
 
-@dataclass
 @auto_docstring
+@dataclass
 class TimesFmOutput(BaseModelOutput):
     r"""
     loc (`torch.Tensor` of shape `(batch_size, )`):
@@ -56,8 +56,8 @@ class TimesFmOutput(BaseModelOutput):
     scale: torch.Tensor | None = None
 
 
-@dataclass
 @auto_docstring
+@dataclass
 class TimesFmOutputForPrediction(BaseModelOutput):
     r"""
     mean_predictions (`torch.Tensor` of shape `(batch_size, sequence_length)`):
