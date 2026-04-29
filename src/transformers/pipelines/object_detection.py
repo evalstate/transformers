@@ -159,21 +159,27 @@ class ObjectDetectionPipeline(Pipeline):
         else:
             # This is a regular ForObjectDetectionModel
             raw_annotations = self.image_processor.post_process_object_detection(model_outputs, threshold, target_size)
-            raw_annotation = raw_annotations[0]
-            scores = raw_annotation["scores"]
-            labels = raw_annotation["labels"]
-            boxes = raw_annotation["boxes"]
-
-            raw_annotation["scores"] = scores.tolist()
-            raw_annotation["labels"] = [self.model.config.id2label[label.item()] for label in labels]
-            raw_annotation["boxes"] = [self._get_bounding_box(box) for box in boxes]
-
-            # {"scores": [...], ...} --> [{"score":x, ...}, ...]
+            annotations = []
             keys = ["score", "label", "box"]
-            annotation = [
-                dict(zip(keys, vals))
-                for vals in zip(raw_annotation["scores"], raw_annotation["labels"], raw_annotation["boxes"])
-            ]
+            for raw_annotation in raw_annotations:
+                scores = raw_annotation["scores"]
+                labels = raw_annotation["labels"]
+                boxes = raw_annotation["boxes"]
+
+                raw_annotation["scores"] = scores.tolist()
+                raw_annotation["labels"] = [self.model.config.id2label[label.item()] for label in labels]
+                raw_annotation["boxes"] = [self._get_bounding_box(box) for box in boxes]
+
+                # {"scores": [...], ...} --> [{"score":x, ...}, ...]
+                annotation = [
+                    dict(zip(keys, vals))
+                    for vals in zip(raw_annotation["scores"], raw_annotation["labels"], raw_annotation["boxes"])
+                ]
+                annotations.append(annotation)
+
+            if len(annotations) == 1:
+                return annotations[0]
+            return annotations
 
         return annotation
 
