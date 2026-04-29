@@ -522,8 +522,7 @@ class TrainingArguments:
             Load the best checkpoint at the end of training. Requires `eval_strategy` to be set.
             When enabled, the best checkpoint is always saved (see `save_total_limit`).
             <Tip>
-            When `True`, `save_strategy` must match `eval_strategy` (unless `save_strategy` is `"best"`), and if using `"steps"`,
-            `save_steps` must be a multiple of `eval_steps`.
+            When `True`, `save_strategy` must match `eval_strategy` (unless `save_strategy` is `"best"`).
             </Tip>
         metric_for_best_model (`str`, *optional*):
             Metric to use for comparing models when `load_best_model_at_end=True`. Must be a metric
@@ -1708,26 +1707,6 @@ class TrainingArguments:
                     '--load_best_model_at_end requires the save and eval strategy to match, except when --save_strategy="best", but found\n- Evaluation '
                     f"strategy: {self.eval_strategy}\n- Save strategy: {self.save_strategy}"
                 )
-            if self.eval_strategy == IntervalStrategy.STEPS and self.save_steps % self.eval_steps != 0:
-                if self.eval_steps < 1 or self.save_steps < 1:
-                    if not (self.eval_steps < 1 and self.save_steps < 1):
-                        raise ValueError(
-                            "--load_best_model_at_end requires the saving steps to be a multiple of the evaluation "
-                            "steps, which cannot get guaranteed when mixing ratio and absolute steps for save_steps "
-                            f"{self.save_steps} and eval_steps {self.eval_steps}."
-                        )
-                    # Use integer arithmetic to avoid floating point precision issues
-                    LARGE_MULTIPLIER = 1_000_000
-                    if (self.save_steps * LARGE_MULTIPLIER) % (self.eval_steps * LARGE_MULTIPLIER) != 0:
-                        raise ValueError(
-                            "--load_best_model_at_end requires the saving steps to be a multiple of the evaluation "
-                            f"steps, but found {self.save_steps}, which is not a multiple of {self.eval_steps}."
-                        )
-                else:
-                    raise ValueError(
-                        "--load_best_model_at_end requires the saving steps to be a round multiple of the evaluation "
-                        f"steps, but found {self.save_steps}, which is not a round multiple of {self.eval_steps}."
-                    )
 
         if is_torch_available():
             if self.bf16 or self.bf16_full_eval:

@@ -2131,6 +2131,8 @@ class Trainer:
 
             if self.args.save_strategy == SaveStrategy.BEST:
                 self.control.should_save = is_new_best_metric
+            elif is_new_best_metric and self.args.load_best_model_at_end:
+                self.control.should_save = True
 
         if self.control.should_save:
             self._save_checkpoint(model, trial)
