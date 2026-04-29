@@ -1,0 +1,772 @@
+{"pr":45692,"decision":"defect","reason":"fixes Phi4 image processor auto-map override with trust_remote_code","title":"[Fix Phi4 test] Add option to override image_processor_auto_map with local code when trust_remote_code is True"}
+{"pr":45691,"decision":"defect","reason":"handles continuous batching worker thread errors with clearer restart failure path","title":"[serve] cb error "}
+{"pr":45690,"decision":"feature","reason":"adds reasoning content support to transformers serve chat/completion responses","title":"[serve] Support for reasoning "}
+{"pr":45687,"decision":"defect","reason":"fixes MoE histogram dtype/backend issue on MPS and non-CUDA hardware","title":"fix: Made histc_input robust for broader hardware"}
+{"pr":45686,"decision":"defect","reason":"fixes read-only permissions inherited when copying custom module files","title":"Fix custom-module copies inheriting read-only permissions"}
+{"pr":45683,"decision":"defect","reason":"prevents uint8 audio modules from 4-bit conversion crashes in multimodal quantization","title":"Exclude audio modules from conversion process"}
+{"pr":45682,"decision":"defect","reason":"restores LoRA hotswapping padding after PEFT integration changes","title":"FIX Restore LoRA hotswapping functionality"}
+{"pr":45681,"decision":"defect","reason":"restores DeepSeek tokenizer backend override to avoid incorrect tokenizer dispatch","title":"Restore TokenizersBackend override for DeepSeek V3/R1 tokenizer dispatch"}
+{"pr":45679,"decision":"other","reason":"test/CI marker change enabling PEFT tests, not a user-facing feature or defect fix","title":"TST Run fast PEFT tests in normal CI"}
+{"pr":45678,"decision":"defect","reason":"fixes Phi-4 multimodal test isolation by avoiding shared mutable sub-config mutation","title":"Fix shared config mutation issue in flash_attn_from_config"}
+{"pr":45671,"decision":"defect","reason":"updates Phi-4 multimodal test revision references to fix test execution","title":"Update latest revision for Phi-4-multimodal test"}
+{"pr":45670,"decision":"defect","reason":"corrects GLM-ASR auto-model mapping for multimodal LM dispatch","title":"[nit] glmasr should be in AutoModelForMultimodalLM"}
+{"pr":45668,"decision":"feature","reason":"adds GGUF loading support for Qwen3.5 MoE architecture","title":"[GGUF] Add support for Qwen3.5 MoE (qwen35moe arch)"}
+{"pr":45667,"decision":"other","reason":"internal typing-checker configuration chore, not a feature or defect fix","title":"chore(typing): add ty type checking for 3 pipeline files"}
+{"pr":45666,"decision":"feature","reason":"extends hub kernel fusion API with KernelConfig support","title":"Extended n-to-1 kernel fusion via  "}
+{"pr":45664,"decision":"documentation","reason":"README translation/documentation update","title":"Doc translate to Persian(farsi) "}
+{"pr":45662,"decision":"defect","reason":"fixes expert module overwrites when combining expert parallelism with FSDP2 rank-0 broadcast","title":"Fix EP + FSDP2: experts silently overwritten by rank-0 broadcast"}
+{"pr":45661,"decision":"feature","reason":"expands weight-converter mapping scope and fine-grained transform registration","title":"[Weight Converter] More fine-grained mappings on classes, scoping for every transforms (including weight converter)"}
+{"pr":45654,"decision":"feature","reason":"refactors continuous batching model execution into a dedicated model runner class","title":"[CB] Refactor any model-related code in a separate class"}
+{"pr":45653,"decision":"feature","reason":"improves continuous batching overall script and decode bucketing behavior","title":"[CB] Better overall script and decode bucketting"}
+{"pr":45651,"decision":"feature","reason":"optimizes LengthGroupedSampler dataset length computation","title":"[Trainer] Optimize LengthGroupedSampler computation with select_columns and tqdm"}
+{"pr":45649,"decision":"defect","reason":"fixes FSDP2 cpu_ram_efficient_loading OOM regression","title":"Fix OOM regression for FSDP2 + cpu_ram_efficient_loading on large models"}
+{"pr":45645,"decision":"defect","reason":"fixes xdist collisions for captured_info CI artifacts and debug logs","title":"Fix xdist collisions for captured_info artifacts and preserve CI debug logs"}
+{"pr":45643,"decision":"feature","reason":"adds DeepSeek V4 model support","title":"Add DeepSeek V4"}
+{"pr":45642,"decision":"defect","reason":"fixes trust_remote_code local cache collisions for local models","title":"Fix trust_remote_code local cache collisions for local models (#45632)"}
+{"pr":45640,"decision":"feature","reason":"defaults Trainer FSDP setup to FSDP2 and simplifies fsdp config API","title":"🚨🚨🚨 [Trainer] Default to FSDP2, simplify API around fsdp + fsdp_config"}
+{"pr":45639,"decision":"defect","reason":"makes patched testing debug logs xdist-safe","title":"Make patched testing debug logs xdist-safe"}
+{"pr":45638,"decision":"feature","reason":"adds multi-token prediction support for Qwen3.5","title":"Add Multi-Token Prediction (MTP) support for Qwen3.5"}
+{"pr":45635,"decision":"defect","reason":"speeds up dtype regex weight loading hotspot and reduces dtype test cost","title":"qa: speed up dtype regex weight load + reduce dtype tests to 3 random"}
+{"pr":45634,"decision":"feature","reason":"adds DeepGEMM BF16 integration isolation and refactor","title":"DeepGEMM BF16, isolation, refactor"}
+{"pr":45630,"decision":"feature","reason":"adds new Kimi2-6 model implementation, docs, auto mappings, and tests","title":"Add new model: Kimi2-6"}
+{"pr":45627,"decision":"defect","reason":"fixes AutoProcessor.from_pretrained to honor pre-built sub-processor kwargs","title":"Processing Utils: honor pre-built sub-processor kwargs in from_pretrained"}
+{"pr":45626,"decision":"feature","reason":"adds PP-FormulaNet model support, docs, mappings, and tests","title":"[Model] Add PP-FormulaNet Model Support"}
+{"pr":45621,"decision":"feature","reason":"improves grouped GEMM and expert parallel integration support","title":"Better Grouped GEMM + EP"}
+{"pr":45618,"decision":"feature","reason":"adds MTP speculative decoding candidate generator support","title":"Add MTP speculative decoding via MTPCandidateGenerator"}
+{"pr":45615,"decision":"defect","reason":"fixes qianfan_ocr model tests by adding XPU expectations","title":"fix(qianfan_ocr): add XPU expectations"}
+{"pr":45614,"decision":"defect","reason":"adds missing requests dependency for transformers[serving] installs","title":"Add missing requests dependency to transformers[serving]"}
+{"pr":45613,"decision":"feature","reason":"adds MiniCPM3 model architecture support, docs, mappings, and tests","title":"[New Model] Add MiniCPM3 support "}
+{"pr":45612,"decision":"documentation","reason":"updates model documentation cards only","title":"[docs] update model cards"}
+{"pr":45609,"decision":"feature","reason":"extends torchao quantizer serialization/deserialization for HF MoE models","title":"make it possible to ser/deser HF MoE models with torchao"}
+{"pr":45608,"decision":"documentation","reason":"bulk edits model documentation examples to plain Python and dtype-free snippets","title":"Python code in model docs"}
+{"pr":45604,"decision":"feature","reason":"adds agent CLI skill support, schemas, and agent package output helpers","title":"Agent first cli with skill"}
+{"pr":45599,"decision":"feature","reason":"improves import performance through additional lazy loading in utility modules","title":"qa: more lazy loading"}
+{"pr":45597,"decision":"feature","reason":"adds built-in Granite 4.1 Vision model support with docs, auto mappings, and tests","title":"Add Granite 4.1 Vision (granite4_vision)"}
+{"pr":45596,"decision":"defect","reason":"fixes BLT model XPU test failures and expectations","title":"fix 2 failed test cases for blt model on XPU"}
+{"pr":45594,"decision":"defect","reason":"updates backbone utility tests for regressions after backbone API behavior changes","title":"fix(utils): Resolve backbone utils test regressions"}
+{"pr":45591,"decision":"defect","reason":"fixes Nemotron-H weight initialization overwriting trained parameters despite _no_reinit","title":"[nemotron_h] respect _no_reinit flag on dt_bias and out_proj.weight"}
+{"pr":45586,"decision":"feature","reason":"adds new Audio-Visual Flamingo model support with docs, auto mappings, processor and tests","title":"Add Audio-Visual Flamingo model"}
+{"pr":45578,"decision":"defect","reason":"removes GPT-OSS attribute_map regression that clobbers num_local_experts during checkpoint loading","title":"Remove attribute_map from GptOssConfig"}
+{"pr":45570,"decision":"defect","reason":"fixes Whisper long-form generation when eos_token_id is a list","title":"Fix whisper long-form generation when eos_token_id is a list"}
+{"pr":45569,"decision":"feature","reason":"splits Nemotron-H dense and sparse model variants with configs, auto mappings, docs and tests","title":"Proper nemotron H and 3 and 2"}
+{"pr":45568,"decision":"defect","reason":"fixes Gemma4 model test failures and attention-mask handling","title":"Gemma4: fix failed test cases"}
+{"pr":45552,"decision":"defect","reason":"removes erroneous auto-docstring warning spam when importing ModernBERT","title":"Remove warnings for modernbert"}
+{"pr":45550,"decision":"other","reason":"CI workflow runner selection change, not library feature or defect fix","title":"Add runner selection for mi325 GPU type"}
+{"pr":45549,"decision":"defect","reason":"fixes mono/channel averaging behavior in batched audio feature extractors","title":"fix: apply channel averaging correctly in audio feature extractors"}
+{"pr":45548,"decision":"defect","reason":"fixes Expert Parallelism plus DeepSpeed ZeRO-3 model loading when launched via accelerate","title":"Fix EP + DeepSpeed ZeRO-3 loading via accelerate launch"}
+{"pr":45546,"decision":"feature","reason":"adds GGUF loading support for Llama 4 text models","title":"feat: Add GGUF loading support for Llama 4 (text)"}
+{"pr":45543,"decision":"other","reason":"CI/telemetry workflow support, not library defect or user-facing feature","title":"ci: OTEL support"}
+{"pr":45541,"decision":"defect","reason":"fixes local_files_only tokenizer fallback when tokenizer files are missing","title":"Fix local_files_only tokenizer fallback when tokenizer files are missing (Issue 45538)"}
+{"pr":45534,"decision":"feature","reason":"adds ALM base model class without LM head across audio-language models","title":"\ud83d\udea8 [ALM] Add base model without head"}
+{"pr":45524,"decision":"defect","reason":"fixes KeyError when flash_attn is absent from importlib packages_distributions","title":"utils: handle flash_attn missing from importlib packages_distributions without crashing"}
+{"pr":45523,"decision":"defect","reason":"fixes Seq2SeqLM ExecuTorch export by passing encoder attention mask and static encoder shapes","title":"Fix Seq2SeqLM ExecuTorch export: add encoder_attention_mask to decoder and use static encoder shapes"}
+{"pr":45512,"decision":"defect","reason":"fixes OutputRecorder matching by using regex search on layer names","title":"[OutputRecorder] re.search on layer_name"}
+{"pr":45497,"decision":"feature","reason":"adds V-JEPA 2.1 inference support and docs/tests","title":"Add V-JEPA 2.1 inference support"}
+{"pr":45493,"decision":"feature","reason":"modularizes ProcessorMixin and updates processor implementations/tests","title":"Modularize `ProcessorMixin` into smaller components"}
+{"pr":45490,"decision":"feature","reason":"adds CTSM model implementation, auto mappings, docs, and tests","title":"Add ctsm model"}
+{"pr":45487,"decision":"defect","reason":"fixes model-parallel device handling for AltCLIP/ChineseCLIP-style text models","title":"Fix model parallel issue for altclip model and ChineseClip model"}
+{"pr":45477,"decision":"feature","reason":"extends masking utilities/generation paths with blockwise mask function support","title":"Blockwise mask fn as opt arg in all masking functions"}
+{"pr":45476,"decision":"other","reason":"test-only CI workflow experiment marked do not merge","title":"[Don't merge] Call CI workflow"}
+{"pr":45471,"decision":"feature","reason":"adds EXAONE 4.5 model implementation, auto mappings, docs, and tests","title":"Add EXAONE 4.5 implementations"}
+{"pr":45465,"decision":"documentation","reason":"updates contributor/model-addition documentation only","title":"[docs] contributing"}
+{"pr":45462,"decision":"other","reason":"chore adding repository security/static checks across tooling and tests","title":"chore(sec): added a handful of security checks"}
+{"pr":45453,"decision":"feature","reason":"refactors tensor-parallel checkpoint loading paths and related benchmark support","title":"Draft commit"}
+{"pr":45452,"decision":"other","reason":"large mechanical refactor replacing wildcard imports in model __init__ files","title":"refactor: replace wildcard imports with explicit imports in model __init__.py files"}
+{"pr":45438,"decision":"feature","reason":"adds Gemma4 sequence classification model head, docs, mapping, and tests","title":"Add Gemma4ForSequenceClassification"}
+{"pr":45426,"decision":"feature","reason":"adds a new AXK1 model implementation and auto registrations","title":"Feature/add axk1"}
+{"pr":45423,"decision":"defect","reason":"fixes handling of void labels when reducing semantic segmentation maps","title":"Fix void segmentation map label reduction"}
+{"pr":45422,"decision":"defect","reason":"fixes chat template output by omitting messages with content=None","title":"Drop `content=None` from messages in `apply_chat_template`"}
+{"pr":45421,"decision":"defect","reason":"fixes nested base_model_prefix handling during weight conversion/loading","title":"Improve nested `base_model_prefix` handling in weight conversion and loading"}
+{"pr":45415,"decision":"other","reason":"typing/tooling cleanup adding type-check coverage across root modules","title":"Adds type checking to `src/transformers/*py`"}
+{"pr":45413,"decision":"defect","reason":"fixes EtaLogitsWarper behavior when all logits are masked","title":"Fix EtaLogitsWarper on fully masked logits"}
+{"pr":45401,"decision":"feature","reason":"adds a new Voxtral TTS model, docs, conversion, auto registrations, and tests","title":"Add support for Voxtral-4B-TTS-2603 to transformers"}
+{"pr":45396,"decision":"feature","reason":"refactors dynamic vision/audio tensor preparation into shared pure utility functions","title":"Extract dynamic vision/audio tensors into standalone pure functions"}
+{"pr":45391,"decision":"feature","reason":"adds shared audio/multimodal tester infrastructure and updates audio model tests","title":"audio tester class"}
+{"pr":45389,"decision":"defect","reason":"fixes repetition penalty generation to require input_ids instead of silently using inputs_embeds-only calls","title":"Require input_ids for repetition penalty"}
+{"pr":45382,"decision":"feature","reason":"adds AudioGen conversion utilities and MusicGen docs","title":"Add AudioGen (AudioCraft) to MusicGen conversion scripts"}
+{"pr":45379,"decision":"defect","reason":"fixes Qwen3.5 MoE vision config strict loading of deepstack_visual_indexes","title":"fix(config): add deepstack_visual_indexes to Qwen3_5MoeVisionConfig"}
+{"pr":45378,"decision":"defect","reason":"guards ReasoningEffort import for older mistral_common versions","title":"fix(mistral): guard ReasoningEffort import for older mistral_common versions"}
+{"pr":45363,"decision":"feature","reason":"adds generic n-to-1 kernel fusion support via KernelConfig and hub kernels","title":"n-to-1 kernel fusion via `KernelConfig`"}
+{"pr":45360,"decision":"other","reason":"maintenance update replacing deprecated CLI references in conversion scripts","title":"Replace deprecated `huggingface-cli` references with `hf`"}
+{"pr":45355,"decision":"feature","reason":"adds new PhoneticXeus model, tokenizer/processor, docs, auto registrations, and tests","title":"Add universal phone recognition model - PhoneticXeus"}
+{"pr":45351,"decision":"defect","reason":"guards CUDA device capability lookup when CUDA libraries exist but no GPU is available","title":"fix(testing_utils): guard get_device_capability with torch.cuda.is_available()"}
+{"pr":45350,"decision":"feature","reason":"adds Granite4Vision conditional generation model and auto registrations","title":"WIP: Add support for Granite4VisionForConditionalGeneration"}
+{"pr":45346,"decision":"defect","reason":"adds regression coverage for router logits softmax handling in MoE models","title":"Fix Double Application of Softmax for Router Logits in MoE models"}
+{"pr":45342,"decision":"defect","reason":"fixes load ignore-key handling to recurse through child module settings","title":"Use `_keys_to_ignore_on_load_unexpected/missing` recursively from children"}
+{"pr":45333,"decision":"feature","reason":"adds heterogeneous per-layer configuration support and tests","title":"Add heterogeneous config support (per-layer configuration)"}
+{"pr":45332,"decision":"feature","reason":"adds heterogeneous per-layer modeling support, utilities, GPT-OSS integration, and tests","title":"Add heterogeneous model support (per-layer config and modeling)"}
+{"pr":45321,"decision":"defect","reason":"removes deprecated TorchAO AffineQuantizedTensor references before upstream removal","title":"Remove references to torchao's AffineQuantizedTensor"}
+{"pr":45317,"decision":"defect","reason":"fixes AttributeError in Mistral tokenizer regex patching when using raw backend tokenizers","title":"Fix AttributeError in _patch_mistral_regex when fix_mistral_regex=True"}
+{"pr":45300,"decision":"defect","reason":"fixes Nemotron-H loading by supporting standalone MLP layer type in hybrid override patterns","title":"Fix Nemotron-H: add mlp layer type support"}
+{"pr":45296,"decision":"feature","reason":"adds GGUF loading support for Gemma4 text models and tests","title":"Add GGUF support to Gemma4 (31B & 26B-A4B) text"}
+{"pr":45294,"decision":"feature","reason":"adds Gemma4 sequence classification model class and auto registration","title":"feat: add Gemma4ForSequenceClassification"}
+{"pr":45293,"decision":"defect","reason":"fixes AutoTokenizer global state leak from registered fast aliases causing AttributeError in tests","title":"Fix \"AttributeError: NewTokenizer has no attribute special_attribute_present\" (Remove `REGISTERED_FAST_ALIASES`)"}
+{"pr":45273,"decision":"defect","reason":"prevents Liger evaluation OOM by skipping logits when only prediction loss is needed","title":"fix: liger unnecessarily materializes logits in VRAM during eval, causing OOM"}
+{"pr":45270,"decision":"feature","reason":"adds Trainer support and arguments for logging individual loss components","title":"[Trainer] Support multi-loss component logging"}
+{"pr":45267,"decision":"documentation","reason":"adds only docstring/documentation to DistilBERT FFN.forward","title":"Add docstring to FFN.forward in DistilBERT"}
+{"pr":45254,"decision":"other","reason":"open PR currently has an empty commit/no changed files despite test-fix title","title":"Fix more integration tests for important models"}
+{"pr":45244,"decision":"other","reason":"CI placeholder PR with empty commit and no changed files","title":"Let's CI go great"}
+{"pr":45233,"decision":"defect","reason":"fixes TimesFM/TimesFM2.5 ONNX export incompatibilities with data-dependent branches and tensor batching","title":"feat: make timesfm2_5 onnx export compatible"}
+{"pr":45221,"decision":"defect","reason":"improves audio loading error when input is actually video content","title":"user friendly error when loading audio from video"}
+{"pr":45218,"decision":"feature","reason":"adds a new agent-oriented transformers CLI surface and documentation","title":"Proposal: Agent-first CLI"}
+{"pr":45213,"decision":"other","reason":"explicit DO NOT MERGE experimental model-creation skill PR with broad tooling/model changes","title":"DO NOT MERGE - model creation skill"}
+{"pr":45202,"decision":"defect","reason":"disables Gemma4 FlashAttention support for released checkpoints with unsupported global head_dim=512","title":"Fix gemma4 has flash-attention incompatbile head-dim=512"}
+{"pr":45193,"decision":"defect","reason":"fixes config pydantic validation so it does not require torch-dependent type checks","title":"Config can apply pyndatic validation without torch-dependence"}
+{"pr":45189,"decision":"feature","reason":"adds CI workflow support for runnable documentation examples","title":"Add doc test CI workflow reusing existing model job infrastructure"}
+{"pr":45186,"decision":"feature","reason":"adds the new Isaac multimodal model implementation and tests","title":"Add new model: Isaac "}
+{"pr":45181,"decision":"feature","reason":"adds a lightweight top-level transformers_cli package and entrypoint","title":"Make the cli a top-level package"}
+{"pr":45176,"decision":"feature","reason":"adds EfficientViT-SAM model support, processors and tests","title":"added efficietvitsam model to HF"}
+{"pr":45170,"decision":"defect","reason":"fixes misspelled layernorm conversion keys in model weight mappings","title":"`layrnorm` -> `layernorm`"}
+{"pr":45168,"decision":"feature","reason":"changes default scheduler min_lr and max_lr values","title":"Update min_lr and max_lr default values to better defaults"}
+{"pr":45167,"decision":"feature","reason":"adds Anthropic-style tool/function JSON schema support","title":"Add anthropic style of function schema"}
+{"pr":45157,"decision":"feature","reason":"adds PrismML Bonsai GGUF quantization/import support and tests","title":"[WIP] PrismML Bonsai model support"}
+{"pr":45153,"decision":"feature","reason":"adds native torch/flash-attention integration across attention utilities and models","title":"[`FA`] Native torch integration"}
+{"pr":45152,"decision":"documentation","reason":"updates model testing documentation and docs TOC","title":"[docs] model testing"}
+{"pr":45149,"decision":"feature","reason":"adds a new Sam3 Lite Text model plus model-skill/checker support","title":"DO NOT MERGE adding SAML3-LiteText with a skill, first pass"}
+{"pr":45147,"decision":"defect","reason":"fixes broken HQQ quantization integration and tests","title":"Fix broken HQQ support"}
+{"pr":45144,"decision":"feature","reason":"adds Xiaomi MiMo-V2 Flash model support","title":"Add Xiaomi MiMo-V2"}
+{"pr":45134,"decision":"feature","reason":"optimizes Parakeet feature extraction on CUDA","title":"Optimize Parakeet feature extraction on CUDA"}
+{"pr":45133,"decision":"feature","reason":"adds Sarvam model implementation files","title":"Add sarvam model"}
+{"pr":45128,"decision":"defect","reason":"fixes auto_docstring handling of future annotations in kwargs processing","title":"Fix: handle future annotations in _process_kwargs_parameters"}
+{"pr":45115,"decision":"feature","reason":"refactors Nemotron-H to inherit GraniteMoeHybrid implementation","title":"Refactor/nemotron h inherit granitemoehybrid"}
+{"pr":45114,"decision":"documentation","reason":"fixes doctest examples in documentation pages","title":"fix: lets fix all doctests"}
+{"pr":45113,"decision":"feature","reason":"adds optional GPU Direct Storage support for safetensors loading","title":"Add GDS support for safetensors loading "}
+{"pr":45110,"decision":"feature","reason":"adds SAM 3.1 model and video support","title":"Add SAM 3.1"}
+{"pr":45105,"decision":"defect","reason":"fixes auto_docstring crash with future string annotations","title":"Fix @auto_docstring crash with from __future__ import annotations in _process_kwargs_parameters"}
+{"pr":45101,"decision":"feature","reason":"adds Nandi model support","title":"Adding support for Nandi Models"}
+{"pr":45097,"decision":"feature","reason":"adds converter support for old InternVL2 1B/2B checkpoints","title":"Add old InternVL2-1B/2B support to the InternVL conversion script #45092"}
+{"pr":45086,"decision":"defect","reason":"fixes AttributeError in Mistral regex tokenizer patching","title":"fix AttributeError in _patch_mistral_regex"}
+{"pr":45082,"decision":"feature","reason":"updates VidEoMT conversion script for remaining checkpoints","title":"[VidEoMT] Update conversion script"}
+{"pr":45077,"decision":"defect","reason":"hardens CI workflows by pinning actions and removing secret interpolation from run blocks","title":"fix: pin 50 unpinned actions to commit SHA, extract 1 secret to env var"}
+{"pr":45075,"decision":"feature","reason":"adds DeepSeek-OCR-2 model support","title":"Add Deepseek-OCR-2 model"}
+{"pr":45073,"decision":"feature","reason":"refactors OwlViT to modular model structure","title":"Refactor OwlViT to modular Transformers"}
+{"pr":45067,"decision":"feature","reason":"adds Trainer resume_from_checkpoint support for Hub checkpoint downloads","title":"feat: trainer resume_from_checkpoint support hub downloads (#43375)"}
+{"pr":45064,"decision":"feature","reason":"improves and shards repository checker tooling","title":"refactor: shard checkers"}
+{"pr":45060,"decision":"defect","reason":"fixes PIL backend fallback regression when torchvision is unavailable","title":"Fix PIL backend fallback when torchvision is unavailable"}
+{"pr":45056,"decision":"defect","reason":"fixes auto_docstring to run only on __doc__","title":"[] needs to be only run on __doc__ "}
+{"pr":45055,"decision":"defect","reason":"fixes Trainer checkpoints missing config for non-PreTrainedModel models","title":"Save model config in Trainer checkpoints for non-PreTrainedModel models"}
+{"pr":45040,"decision":"defect","reason":"fixes VideoLlama3 missing lm_head.weight test failures","title":"Llama3 video fix"}
+{"pr":45037,"decision":"documentation","reason":"fixes invalid syntax in attention interface documentation example","title":"add missing colon in custom_attention function signature in attention…"}
+{"pr":45034,"decision":"defect","reason":"fixes Qwen3.5 padding-free packed inputs on the linear-attention fast path","title":"Pass packed boundary metadata to Qwen3.5 linear-attention fast kernels from data collator"}
+{"pr":45028,"decision":"feature","reason":"large tensor-parallel/FSDP integration refactor and distributed support changes","title":"TP refactor for FSDP + TP integration"}
+{"pr":45017,"decision":"defect","reason":"fixes GLM5 rotary embedding style and activation behavior","title":"[WIP][Fix] GLM 5 set `apply_rotary_pos_emb` to `is_neox_style=False` && remove `F.relu()`"}
+{"pr":44989,"decision":"feature","reason":"introduces distributed training API prototype scripts","title":"\ud83d\udea8 Distributed training API"}
+{"pr":44981,"decision":"defect","reason":"fixes Trainer loss-only evaluation memory path when Liger is enabled","title":"Trainer: set skip_logits for loss-only eval when liger enabled"}
+{"pr":44979,"decision":"feature","reason":"adds module fusion API and tests","title":"Module Fusion API"}
+{"pr":44974,"decision":"feature","reason":"refactors core model loading for FSDP shard-on-read support","title":"Refactor core_model_loading to support FSDP shard-on-read loading"}
+{"pr":44973,"decision":"defect","reason":"fixes vision attention max_seqlen typing for torch.compile and FlashAttention2","title":"Fix max_seqlen type in vision attention for torch.compile + FA2"}
+{"pr":44965,"decision":"other","reason":"temporary try PR touching workflow and temp file, not a product feature or defect fix","title":"try"}
+{"pr":44958,"decision":"defect","reason":"fixes PILImageResampling import error in video processing","title":"fixed import error with PILImageResampling"}
+{"pr":44956,"decision":"feature","reason":"adds new HyperCLOVAX model implementation, docs, and tests","title":"Add HyperCLOVAX SEED Think 14B"}
+{"pr":44952,"decision":"defect","reason":"fixes CLIP/SigLIP vision outputs when output_hidden_states=True","title":"Fix: Add correct return behaviour when output_hidden_states=True for CLIP and SIGLIP vision models"}
+{"pr":44942,"decision":"feature","reason":"adds optional inference-time layer fusion via from_pretrained","title":"Add inference time layer fusion optimisations via `PreTrainedModel.from_pretrained(fuse_layers=True)`"}
+{"pr":44940,"decision":"defect","reason":"fixes thread-unsafe tie_weights skip state during concurrent model loading","title":"Fix tie_weights skipping logic is not tied to model thread scope"}
+{"pr":44923,"decision":"defect","reason":"fixes unconditional Hub model_info call for local/offline Mistral tokenizer regex patching","title":"fix: avoid unconditional model_info call in _patch_mistral_regex"}
+{"pr":44907,"decision":"defect","reason":"fixes VLM placeholder-mask expansion inefficiency/data-dependent indexing across models","title":"Remove unnecessary expand_as in get_placeholder_mask across VLMs"}
+{"pr":44893,"decision":"defect","reason":"adds missing StaticLayer.crop API parity with DynamicLayer","title":"add `StaticLayer.crop()` to match `DynamicLayer` API"}
+{"pr":44891,"decision":"feature","reason":"adds MoE router health Trainer callback, docs, and tests","title":"[Trainer] add MoERouterHealthCallback Callback"}
+{"pr":44889,"decision":"defect","reason":"fixes DeepSpeed evaluate/predict before train stale state and config mutation issues","title":"[DeepSpeed] Fix evaluate()/predict() before train()"}
+{"pr":44875,"decision":"feature","reason":"refactors CLI serve module organization without public API change","title":"refactor: improved the cli server module code organization"}
+{"pr":44872,"decision":"documentation","reason":"updates an outdated code comment reference in generation utils","title":"Fix: Update outdated sampler comment in generation/utils.py"}
+{"pr":45694,"decision":"defect","reason":"fixes TrainingArguments batch size properties when accelerator split_batches is enabled","title":"Fix train_batch_size and eval_batch_size to respect split_batches config"}
+{"pr":44836,"decision":"defect","reason":"fixes OlmoHybrid packed-sequence recurrent state leakage by passing cu_seqlens to FLA kernels","title":"Add cu_seqlens support to OlmoHybridGatedDeltaNet for packed sequences"}
+{"pr":44830,"decision":"feature","reason":"adds the AudioFlamingoNext model alias, docs, auto mappings, and tests","title":"Add AudioFlamingoNext model"}
+{"pr":44827,"decision":"defect","reason":"fixes Mistral4 grouped-mm alignment/test failures and related mappings","title":"Fix Mistral4 tests"}
+{"pr":44815,"decision":"defect","reason":"fixes finegrained FP8 dequantization and Mistral4 loading behavior","title":"Dequant fix"}
+{"pr":44794,"decision":"feature","reason":"refactors GGUF weight conversion path but PR head contains a broad outdated stacked branch","title":"Refacto GGUF weight conversion"}
+{"pr":44793,"decision":"defect","reason":"fixes Janus image generation when optional config values are None","title":"fix(janus): Handle None values in image generation mode"}
+{"pr":44781,"decision":"defect","reason":"fixes tokenizer extra_special_tokens list handling","title":"Fix `_set_model_specific_special_tokens` to accept list-format `extra_special_tokens`"}
+{"pr":44775,"decision":"documentation","reason":"refactors n-d parallelism documentation only","title":"[docs] n-d parallelism"}
+{"pr":44772,"decision":"documentation","reason":"updates bitsandbytes quantization docs and doc links","title":"bitsandbytes: Update links and docs"}
+{"pr":44771,"decision":"defect","reason":"changes PI0 fast image processor inheritance to use SigLIP behavior despite vague title","title":"wtf"}
+{"pr":44731,"decision":"defect","reason":"fixes inefficient tensor construction in video test helper","title":"[Tests] Fix slow video tensor creation from list of numpy arrays in SmolVLM"}
+{"pr":44729,"decision":"defect","reason":"replaces imprecise float ceil arithmetic with integer helper to fix export/runtime precision issues","title":"Avoid floating point math for ceil operations"}
+{"pr":44724,"decision":"defect","reason":"fixes incorrect auto mappings and model_type/doc metadata entries","title":"Fix some missing / incorrect entries in auto files"}
+{"pr":44722,"decision":"feature","reason":"refactors GPT-J output tracing to standardized decorator infrastructure","title":"Refactor gptj output tracing to use standardized decorators"}
+{"pr":44713,"decision":"feature","reason":"refactors ColQwen2 retrieval output tracing to standardized decorator infrastructure","title":"[ColQwen2] Refactor output tracing (issue #43979)"}
+{"pr":44697,"decision":"defect","reason":"fixes torch_float conversion returning int instead of float","title":"fix: torch_float should return float, not int"}
+{"pr":44682,"decision":"feature","reason":"adds llama.cpp integration and streaming latency changes for transformers serve","title":"transformers serve + llamacpp"}
+{"pr":44680,"decision":"feature","reason":"adds MASK_FUNCTION support for custom attention kernel modules","title":"Allow kernel modules to declare their preferred mask function"}
+{"pr":44676,"decision":"defect","reason":"fixes GPT-2 NaN/Inf issue by cloning tied lm_head weights on Python 3.13","title":"fix(gpt2): Resolve NaN/Inf issue in lm_head on Python 3.13 with tied weights"}
+{"pr":45695,"decision":"feature","reason":"adds new Granite-Speech-Plus model support","title":"Support for a new Granite-Speech-Plus model"}
+{"pr":44664,"decision":"defect","reason":"fixes generic sequence classifier support for multimodal models","title":":rotating_light: Generic Sequence Classifier works for multimodal models"}
+{"pr":44662,"decision":"feature","reason":"adds new PenguinVL model implementation","title":"[model] Add PenguinVL implementation"}
+{"pr":44660,"decision":"defect","reason":"fixes late CUDA OOM when Trainer reloads PEFT best model","title":"Fix: avoid late CUDA OOM in load_best_model_at_end with PEFT models"}
+{"pr":44659,"decision":"documentation","reason":"removes outdated docstring documentation text","title":"docs: remove outdated use_diff docstring from DistributedConfig.to_js…"}
+{"pr":44650,"decision":"defect","reason":"fixes Seq2SeqTrainer prediction generation for decoder-only models","title":"Fix Seq2SeqTrainer generation path for decoder-only models"}
+{"pr":44646,"decision":"documentation","reason":"isolated typo correction","title":"Fix typo: seperate -> separate"}
+{"pr":44642,"decision":"documentation","reason":"clarifies causal LM label shifting documentation","title":"Clarify that causal LM labels are shifted internally"}
+{"pr":44641,"decision":"defect","reason":"fixes Falcon causal mask creation to avoid unnecessary 4D mask memory use","title":"Conditinally passing and_mask_function arg to create_causal_mask "}
+{"pr":44635,"decision":"feature","reason":"refactors Gemma-style buffers for modular inheritance compatibility","title":"[Gemma] Modular-friendly buffers"}
+{"pr":45697,"decision":"defect","reason":"fixes CUDA-headless testing utility crash by checking torch.cuda.is_available before get_device_capability","title":"fix(testing): check torch.cuda.is_available() before get_device_capability"}
+{"pr": 44626, "decision": "defect", "reason": "restores legacy enforced tokenizer behavior by adding a missing Llama tokenizer branch", "title": "don't break legacy behavior when enforced!"}
+{"pr": 44615, "decision": "defect", "reason": "restores is_torch_fx_available backwards-compatibility shim for trust_remote_code models", "title": "Restore is_torch_fx_available for trust_remote_code backwards compatibility"}
+{"pr": 44606, "decision": "defect", "reason": "adds tokenizer override path to preserve legacy serialized-tokenizer loading when configs are stale", "title": "optionally override tokenizer class with serialized tokenizer "}
+{"pr": 44603, "decision": "defect", "reason": "fixes GPU Dockerfile build on arm64 by installing Rust and handling torchcodec availability", "title": "fixed dockerfile for arm64 systems"}
+{"pr": 44601, "decision": "feature", "reason": "adds native pipeline-parallel distributed loading support", "title": "[Distributed] Add PP support natively"}
+{"pr": 44594, "decision": "feature", "reason": "adds object-detection pipeline postprocessing options for top_k, labels, box format, and sorting", "title": "[Pipeline] Add top_k, label filtering, box_format and score sorting to ObjectDetectionPipeline"}
+{"pr": 44587, "decision": "defect", "reason": "fixes fused QKV tensor slicing for tensor-parallel sharded qkv weights", "title": "Fix: Handling fused qkv result tensor slicing for tp sharded qkv weights"}
+{"pr": 44585, "decision": "defect", "reason": "passes rms_norm_eps into DeepSeekV3 MLA q/kv layernorms and generated copies", "title": "Fix missing rms_norm_eps in DeepseekV3 MLA layernorms"}
+{"pr": 44569, "decision": "feature", "reason": "adds native SarvamMLA model configuration, modular implementation, docs, and auto mappings", "title": "Add SarvamMLA model (sarvamai/sarvam-105b)"}
+{"pr":45699,"decision":"feature","reason":"adds FP8 compressed-tensors kernel acceleration support","title":"Add FP8 kernel acceleration for compressed-tensors quantized models"}
+{"pr":44553,"decision":"feature","reason":"refactors FlashAttention continuous-batching kwargs","title":"[] Refactor FA CB kwargs"}
+{"pr":44550,"decision":"documentation","reason":"grammar/readability changes in Auto Classes docs only","title":"Improve clarity and grammar in Auto Classes documentation"}
+{"pr":44547,"decision":"documentation","reason":"docstring-only correction for position_ids wording","title":"Fix position_ids docstring in modeling_flash_attention_utils.py"}
+{"pr":44543,"decision":"defect","reason":"fixes all-zero assistant_masks for multimodal chat templates","title":"Fix assistant_masks for multimodal inputs in apply_chat_template"}
+{"pr":44535,"decision":"defect","reason":"fixes Qwen2.5-VL processor crash on ragged batched image inputs with padding=False","title":"Fix crash in Qwen2_5_VLProcessor when using batched input with padding=False"}
+{"pr":44517,"decision":"feature","reason":"adds Qwen3-TTS audio model, tokenizer models, processor, docs, and tests","title":"Add qwen3 tts"}
+{"pr":44495,"decision":"feature","reason":"gradient checkpointing cleanup removing redundant attribute definitions across model classes","title":"[`Gradient Ckpting`] Remove unnecessary attribute definitions"}
+{"pr":44467,"decision":"feature","reason":"updates slow-tokenizer conversion to honor placeholder token replacements from added_tokens_decoder","title":"Placeholder tokens update"}
+{"pr":44445,"decision":"feature","reason":"adds GraniteDoclingHybrid model support and auto mappings","title":"Adding support for GraniteDoclingHybrid"}
+{"pr":44438,"decision":"feature","reason":"adds FlashOptim optimizer integration and trainer support","title":"Add flashoptim"}
+{"pr":44420,"decision":"documentation","reason":"documentation-only distributed training guide updates","title":"[docs] distributed training"}
+{"pr":44408,"decision":"feature","reason":"adds Granite Speech option to export encoder hidden states","title":"Add option to export  encoder hidden states for Granite-speech"}
+{"pr":44407,"decision":"documentation","reason":"documentation-only bitsandbytes quantization guide update","title":"docs: add energy efficiency considerations to bitsandbytes quantization guide"}
+{"pr":44394,"decision":"feature","reason":"large API migration from feature extractors to audio processors","title":"🚨🚧 FeatureExtractor → AudioProcessor"}
+{"pr":44385,"decision":"defect","reason":"fixes make check-repo typing/import utility issues","title":"Fix make check-repo"}
+{"pr":44375,"decision":"feature","reason":"adds RF-DETR model, docs, auto mappings, and tests","title":"Add RF-DETR"}
+{"pr":44369,"decision":"feature","reason":"updates integrations and related zero-shot object detection docs","title":"Feature/integrations docs fix"}
+{"pr":44348,"decision":"feature","reason":"adds Metal/MLX pre-quantized model loading support","title":"Enable MetalConfig to load pre-quantized MLX models from HuggingFace Hub"}
+{"pr":44314,"decision":"feature","reason":"adds HyperClovaX Vision model, processor, docs, mappings, and tests","title":"add HyperClovaX Vision"}
+{"pr":44298,"decision":"defect","reason":"fixes tokenizer backend auto-detection for models with wrong tokenizer mappings","title":"Auto detect wrong mapping models"}
+{"pr":44270,"decision":"defect","reason":"fixes incorrect ProcessorsKwargs images_kwargs type annotations","title":"Add correct typing to custom images_kwargs in ProcessorsKwargs"}
+{"pr":44264,"decision":"feature","reason":"changes MoE training behavior to auto-enable auxiliary loss from coefficient defaults","title":"[`Moe`] Enable aux loss automatically when in training + coef is not 0"}
+{"pr":44259,"decision":"feature","reason":"adds asynchronous data producer abstractions and trainer integration","title":"Async data producer"}
+{"pr":44257,"decision":"defect","reason":"fixes NaN loss aggregation under context parallelism by using nanmean","title":"use nanmean for aggregating loss"}
+{"pr":44252,"decision":"feature","reason":"unifies/deprecates timm backbone handling across modeling, auto mappings, docs, and tests","title":"Timm unification continued"}
+{"pr":44228,"decision":"defect","reason":"fixes parameter/buffer lookup for nested quantized tensor names","title":"[Quantisation] account for nested tensors from quantisers"}
+{"pr":44215,"decision":"feature","reason":"adds sequence-classification heads, auto mappings, docs, and tests for Granite model families","title":"Add sequence classification capability to Granite models"}
+{"pr":44189,"decision":"defect","reason":"fixes Trainer device placement when full-eval precision is used with distributed backends","title":"fix: don\u0027t move model to device under other dist train backends"}
+{"pr":44184,"decision":"feature","reason":"adds a new CircuitGPT model architecture and sparse linear layer implementation","title":"feat: add OpenAI CircuitGPT core architecture and sparse linear layers"}
+{"pr":44178,"decision":"feature","reason":"adds the new XCodec2 audio model, feature extractor, docs, conversion script, and tests","title":"Add xcodec2 model"}
+{"pr":44171,"decision":"feature","reason":"adds Parakeet TDT model support, generation, loss, auto/pipeline integration, docs, conversion, and tests","title":"Parakeet tdt"}
+{"pr":44161,"decision":"defect","reason":"refactors LongT5 output handling to the standardized decorators and is marked as fixing issue #43979","title":"Refactor LongT5 to use @capture_outputs and @can_return_tuple decorators for unified output handling (Fixes #43979)"}
+{"pr":44159,"decision":"feature","reason":"adds SDPA and Flash Attention backend support for OWL-ViT","title":"Add SDPA and Flash Attention support for OWL-ViT"}
+{"pr":44154,"decision":"defect","reason":"refactors VITS output handling to standardized decorators and is marked as fixing issue #43979","title":"Refactored vits to match standardized output collection interface"}
+{"pr":44142,"decision":"feature","reason":"adds Voxtral Realtime generation performance behavior by precomputing encoder outputs and documents the option","title":"[voxtral-realtime] get more perfs!"}
+{"pr":44129,"decision":"defect","reason":"refactors SpeechT5 output tracing to standardized decorators and is marked as fixing issue #43979","title":"Refactor SpeechT5 output tracing to standardized output capture"}
+{"pr":44123,"decision":"defect","reason":"avoids unintended device synchronization in Trainer loss accumulation and gradient clipping","title":"Avoid device sync in training loss accumulation"}
+{"pr":44116,"decision":"defect","reason":"migrates Flaubert output tracing to decorators as part of issue #43979 despite WIP title","title":"[WIP] [Flaubert] Refactor output tracing to decorator-based interface"}
+{"pr":44114,"decision":"defect","reason":"migrates wav2vec2-family output collection to standardized decorators and includes regression fixes for output capture behavior","title":"Migrate wav2vec2, wav2vec2_conformer, and wav2vec2_bert to standardized output collection decorators"}
+{"pr":44101,"decision":"feature","reason":"output tracing refactor for XLM/Flaubert standard capture_outputs architecture","title":"[XLM] Refactor output tracing to align with capture_outputs standardized architecture"}
+{"pr":44098,"decision":"feature","reason":"ViLT output handling refactor to standardized model output patterns","title":"[ViLT] Refactor output handling to align with standardized patterns"}
+{"pr":44086,"decision":"feature","reason":"MGP-STR output tracing refactor to standardized decorators","title":"[MGP-STR] Refactor output tracing to use capture_outputs/can_return_tuple decorators"}
+{"pr":44085,"decision":"feature","reason":"output tracing decorator refactor despite title/path mismatch in PR metadata","title":"Refactor RemBERT to use output tracing decorators"}
+{"pr":44083,"decision":"feature","reason":"adds native FSDP2 support across distributed/modeling utilities and tests","title":"FSDP2 native support in transformers"}
+{"pr":44076,"decision":"feature","reason":"ImageGPT output tracing refactor to capture_outputs decorators","title":"Refectored modeling_imagegpt.py to enable hooks to capture_outputs"}
+{"pr":44074,"decision":"feature","reason":"TextNet output tracing refactor and tests for standardized decorators","title":"[TextNet] Refactor output tracing using capture_outputs decorator"}
+{"pr":44073,"decision":"feature","reason":"VisualBert output tracing refactor to standardized decorators","title":"[VisualBert] Refactor output tracing using capture_outputs and can_return_tuple decorators"}
+{"pr":44072,"decision":"feature","reason":"EfficientNet output tracing refactor to standardized decorators","title":"refactor efficientnet output tracing with @capture_outputs and @can_r\u2026"}
+{"pr":44071,"decision":"feature","reason":"MPT output tracing refactor to standardized decorators","title":"[Refactor] Migrate MPT to standardized output tracing decorators"}
+{"pr":44070,"decision":"feature","reason":"adds GGUF loading support for Qwen3-Next architecture","title":"Add GGUF loading support for Qwen3-Next (qwen3_next) architecture"}
+{"pr":44068,"decision":"feature","reason":"refactors GPT-Neo output handling to capture_outputs/can_return_tuple decorators","title":"Refactor GPT-Neo to use  and  decorators"}
+{"pr":44066,"decision":"feature","reason":"refactors GPT-J and copied CodeGen output tracing to standardized decorators","title":"Refactor GPT-J to use standardized output tracing (#43979)"}
+{"pr":44059,"decision":"feature","reason":"refactors GPT-2 output tracing to standardized decorators","title":"[GPT2] Refactor output tracing to use capture_outputs/can_return_tuple decorators"}
+{"pr":44056,"decision":"feature","reason":"refactors MPNet output tracing to capture_outputs","title":"[MPNet] Refactor output tracing using capture_outputs decorator"}
+{"pr":44054,"decision":"feature","reason":"adds experimental Flash MLA attention integration and GLM MoE DSA wiring","title":"Flash mla interface"}
+{"pr":44044,"decision":"feature","reason":"refactors DeBERTa-v2 output tracing to capture_outputs/_can_record_outputs","title":"Refactor DeBERTa output tracing interface"}
+{"pr":44030,"decision":"feature","reason":"refactors DPR output tracing to standardized decorators","title":"refactor output tracing in dpr"}
+{"pr":44029,"decision":"feature","reason":"refactors RWKV output tracing to standardized decorators","title":"refactor output tracing in rwkv"}
+{"pr":44028,"decision":"feature","reason":"refactors SuperPoint output tracing to standardized decorators","title":"refactor output tracing for superpoint"}
+{"pr":44027,"decision":"feature","reason":"refactors speech_encoder_decoder to standardized output tracing decorators","title":"refactor output tracing in "}
+{"pr":44026,"decision":"feature","reason":"refactors vision_encoder_decoder to standardized output tracing decorators","title":"refactor output tracing for "}
+{"pr":44025,"decision":"feature","reason":"refactors depth_anything output tracing","title":"refactor output tracing for depth_anything"}
+{"pr":44024,"decision":"feature","reason":"standardizes FocalNet output tracing decorators","title":"Focalnet standardized outputs"}
+{"pr":44019,"decision":"feature","reason":"refactors ResNet to standardized output tracing decorators","title":"Refactor resnet to use capture_outputs/can_return_tuple output tracing"}
+{"pr":44018,"decision":"feature","reason":"refactors GPT-Neo output tracing","title":"Refactor GPT-Neo output tracing to use capture_outputs/can_return_tuple"}
+{"pr":44017,"decision":"feature","reason":"refactors SegFormer output capture decorators","title":"Refactor output tracing in segformers (#43979)"}
+{"pr":44015,"decision":"feature","reason":"migrates GPT2-family output collection decorators","title":"Refactor GPT2-based models to standardized output collection interface"}
+{"pr":44013,"decision":"feature","reason":"standardizes MobileNetV2 output tracing","title":"Ouptut tracing: Standardizing MobileNetv2"}
+{"pr":44010,"decision":"feature","reason":"migrates SqueezeBert to standardized output collection decorators","title":"[SqueezeBert] Migrate to standardized output collection decorators"}
+{"pr":44007,"decision":"feature","reason":"decorator-based output tracing refactor for ResNet/RegNet/RT-DETR ResNet model code","title":"[ResNet] Refactor output tracing to decorator-based interface"}
+{"pr":44004,"decision":"feature","reason":"decorator-based output tracing refactor for CodeGen model code","title":"refactor output tracing for `codegen`"}
+{"pr":44003,"decision":"feature","reason":"decorator-based output tracing refactor for Mamba and Falcon-Mamba model code","title":"refactor output tracing in `mamba`"}
+{"pr":44002,"decision":"feature","reason":"decorator-based output tracing refactor for UPerNet model code","title":"refactor output tracing in `upernet`"}
+{"pr":44001,"decision":"feature","reason":"decorator-based output tracing refactor for UnivNet model code","title":"refactor output tracing in `univnet`"}
+{"pr":44000,"decision":"feature","reason":"decorator-based output tracing refactor for vision-text dual encoder model code","title":"refactor output tracing in `vision_text_dual_encoder`"}
+{"pr":43999,"decision":"feature","reason":"decorator-based output tracing refactor for MobileNetV1 model code and tests","title":"refactor output tracing in `mobilenet_v1`"}
+{"pr":43998,"decision":"feature","reason":"decorator-based output tracing refactor for TimmBackbone model code","title":"refactor output tracing in `timm_backbone`"}
+{"pr":43997,"decision":"feature","reason":"decorator-based output tracing migration for RegNet model code","title":"Migrate RegNet to standardized output tracing"}
+{"pr":43996,"decision":"feature","reason":"decorator-based output tracing refactor for FNet and CvT model code","title":"Refactor FNet and CVT output tracing"}
+{"pr":43995,"decision":"feature","reason":"standardized output collection refactor for Falcon model code","title":"Refactoring falcon model to match standardized output collection interface"}
+{"pr":43989,"decision":"defect","reason":"fixes AutoVideoProcessor crash when torchvision is unavailable","title":"Fix AutoVideoProcessor class lookup when torchvision is unavailable"}
+{"pr":43973,"decision":"feature","reason":"adds LFM2/LFM2.5 audio model support","title":"Add lfm2.5 audio"}
+{"pr":43967,"decision":"defect","reason":"fixes AttributeError for list-type labels in text classification example","title":"Fix AttributeError in run_classification.py when detecting multi-label data"}
+{"pr":43961,"decision":"defect","reason":"replaces mutable default arguments that can share state across calls","title":"Replace mutable default arguments with None"}
+{"pr":43924,"decision":"feature","reason":"broad attention-mask API modernization across many model files","title":"[] More old mask APIs"}
+{"pr":43915,"decision":"feature","reason":"adds PaddleOCR-VL conversion script","title":"add PaddleOCR-VL conversion"}
+{"pr":43911,"decision":"defect","reason":"adds missing Llama tokenizer mapping for AutoTokenizer lookup","title":"add Llama to mapping names in tokenization_auto.py"}
+{"pr":43888,"decision":"feature","reason":"adds a new Param2MoE model architecture","title":"Support for BharatGen's Param2MoE model architecture"}
+{"pr":43875,"decision":"defect","reason":"fixes QuantizedLayer.reset to clear quantized key/value caches","title":"Improve handling of QuantizedLayer.reset"}
+{"pr":43863,"decision":"feature","reason":"adds Whisper processor support for separate text/audio kwargs","title":"[whisper] allow to pass text/audio specific kwargs"}
+{"pr":43842,"decision":"defect","reason":"fixes TypeAdapter NameError when pydantic is unavailable","title":"fix(cli): Fix TypeAdapter NameError when pydantic is not installed"}
+{"pr":43838,"decision":"feature","reason":"adds Qwen3 ASR/forced-aligner model support","title":"Qwen3 ASR and Forced Aligner"}
+{"pr":43836,"decision":"defect","reason":"fixes eager TypeAdapter annotation import without optional pydantic","title":"fix: wrapped TypeAdpater in string literals (for now)"}
+{"pr":43833,"decision":"defect","reason":"fixes grouped_mm dtype mismatch under autocast","title":"fix: ensure dtype consistency in grouped_mm under autocast"}
+{"pr":43826,"decision":"defect","reason":"fixes misleading pipeline error message","title":"fix: error message of pipeline"}
+{"pr":43823,"decision":"feature","reason":"adds MobileLLM model implementation","title":"Add `facebook/MobileLLM-125M`"}
+{"pr":43816,"decision":"defect","reason":"fixes SwanLab run resumption by adding id/resume configuration","title":"fix: add id and resume parameters to SwanLab integration"}
+{"pr":43785,"decision":"defect","reason":"fixes FSDP CPU RAM efficient loading behavior","title":"Fix FSDP_CPU_RAM_EFFICIENT_LOADING (#43749)"}
+{"pr":43779,"decision":"feature","reason":"adds SwanLabCallback support for forwarding id/resume kwargs","title":"SwanLab: Add support for id and resume arguments in SwanLabCallback"}
+{"pr":43775,"decision":"defect","reason":"fixes MoE auxiliary load-balancing loss normalization by top_k","title":"fix(moe): normalize auxiliary loss by top_k for correct load balancing"}
+{"pr":43757,"decision":"defect","reason":"avoids a hard failure when loading gpt-oss GGUF checkpoints","title":"Avoid hard failure for gpt-oss GGUF architecture by falling back to g…"}
+{"pr":43751,"decision":"other","reason":"broad ruff/style cleanup rather than a user-facing defect or feature","title":"Fix ruff warnings"}
+{"pr":43747,"decision":"defect","reason":"fixes compressed-tensors quantizer behavior for versions above 0.13","title":"Remove CompressedLinear support for compressed-tensors > 0.13"}
+{"pr":43743,"decision":"feature","reason":"adds modular-model playground/evaluation tooling and Persimmon modularization","title":"Modular playground"}
+{"pr":43665,"decision":"other","reason":"test-reporting experiment that intentionally adds failing tests, not a mergeable defect fix","title":"fix"}
+{"pr":43663,"decision":"feature","reason":"adds an overridable Trainer hook for signature-column selection","title":"Add _get_signature_columns method to allow custom trainers to override column filtering"}
+{"pr":43656,"decision":"defect","reason":"fixes runtime NameError from TypeAdapter/type annotation evaluation in transformers CLI serve","title":"Fix TypeAdapter NameError in transformers CLI"}
+{"pr":43654,"decision":"defect","reason":"prevents duplicate special-token registration from overwriting token properties","title":"fix(tokenizer): Avert special token property overwrites in batch add_tokens calls"}
+{"pr":43651,"decision":"feature","reason":"adds an overridable Trainer hook controlling gradient-accumulation loss scaling","title":"Add _loss_is_scaled_for_ga to allow custom trainers to control gradient accumulation loss scaling"}
+{"pr":43649,"decision":"feature","reason":"adds CI/new-failure reporting workflow and notification changes","title":"Check new failures reporting 5"}
+{"pr":43636,"decision":"feature","reason":"adds Trainer _metrics storage hook for custom metric logging","title":"Add _metrics dict to Trainer for custom metric logging"}
+{"pr":43613,"decision":"feature","reason":"adds promptable visual segmentation pipeline and integrations","title":"Add Promptable Visual Segmentation pipeline"}
+{"pr":43612,"decision":"feature","reason":"adds promptable concept segmentation pipeline and integrations","title":"Add Promptable Concept Segmentation pipeline"}
+{"pr":43549,"decision":"defect","reason":"fixes silent ignoring of unsupported flash-attention parameters by raising errors","title":"[kernels] exception handling for fa kernels"}
+{"pr":43543,"decision":"defect","reason":"fixes fp16 underflow in MoE load-balancing loss by computing softmax in fp32","title":"Fix fp16 underflow in MoE load balancing loss by enforcing fp32 softmax"}
+{"pr":43542,"decision":"defect","reason":"fixes MoE router outputs to preserve raw router logits instead of softmax probabilities","title":"fix: output router capture wrong router logits in qwen moe models"}
+{"pr":43532,"decision":"other","reason":"marked do-not-merge and appears to be temporary CI/test diff-report experiment","title":"[do not merge] Show diff"}
+{"pr":43506,"decision":"feature","reason":"adds a new RishAI model integration","title":"Add RishAI model with full transformers integration"}
+{"pr":43498,"decision":"defect","reason":"fixes backward compatibility for tie_weights","title":"fix/backward compatibility for tie_weights"}
+{"pr":43492,"decision":"feature","reason":"follow-up support for Perception Encoder loading/config conversion and docs","title":"Perception Encoder follow up PR"}
+{"pr":43488,"decision":"other","reason":"explicit do-not-merge repository bot formatting check PR","title":"[don't merge] bad format to check repo bot"}
+{"pr":43484,"decision":"feature","reason":"performance optimization for Ernie 4.5 VL timestamp rendering","title":"Optimize Ernie 4.5 VL timestamp rendering with cached overlays"}
+{"pr":43469,"decision":"feature","reason":"HfArgumentParser usability improvement for Optional[bool] flags","title":"argparser: Allow optional bool flags without values"}
+{"pr":43466,"decision":"defect","reason":"fixes mask loss incorrectly including padded areas in object detection batches","title":"Fix mask loss to ignore padding areas in object detection"}
+{"pr":43451,"decision":"feature","reason":"adds new Molmo2 multimodal model implementation and tests","title":"Add Molmo2"}
+{"pr":43448,"decision":"feature","reason":"adds new Molmo multimodal model implementation and tests","title":"Add Molmo"}
+{"pr":43446,"decision":"feature","reason":"typing/checker feature for decorator return types","title":"[`typings`] Automatically type decorator return types as `tuple | X`"}
+{"pr":43424,"decision":"other","reason":"test-only executorch coverage addition without library behavior change","title":"Add test to ensure executorch exportability with dynamic shapes"}
+{"pr":43395,"decision":"defect","reason":"fixes Trainer label truncation for per-sample nested label structures","title":"Fix label truncation for per-sample nested structures in Trainer"}
+{"pr":43382,"decision":"feature","reason":"adds pathlib.Path support to load_image inputs","title":"Allow Path type in transformers.image_utils.load_image function"}
+{"pr":43378,"decision":"defect","reason":"fixes MimiModel batch encoding inconsistency by making padding mask-aware","title":"feat(models): Make MimiModel encoding padding-aware to ensure batch-to-individual consistency"}
+{"pr":43363,"decision":"feature","reason":"adds a customizable length function to DistributedLengthGroupedSampler","title":"[Improvement] Update `DistributedLengthGroupedSampler` to allow customizing length function"}
+{"pr":43340,"decision":"other","reason":"adds Claude skill/reference files rather than library behavior","title":"Claude code skills for transformers-api"}
+{"pr":43333,"decision":"other","reason":"single source-code typo cleanup without behavior change","title":"Fix typo: interupted -> interrupted"}
+{"pr":43310,"decision":"other","reason":"maintenance refactor replacing regex dependency usage with stdlib re","title":"Replace regex with re"}
+{"pr":43297,"decision":"feature","reason":"optimizes Qwen3-VL processing by reducing redundant pad-token tokenization","title":"[Feat] Reduces redundant tokenization of <pad> tags to accelerate Qwen3VL."}
+{"pr":43291,"decision":"defect","reason":"fixes Whisper tokenizer/model tests and related behavior","title":"Fix whisper tests"}
+{"pr":43271,"decision":"other","reason":"typo-only cleanup without behavior change","title":"Fix typo: necesary \u2192 necessary"}
+{"pr":43270,"decision":"defect","reason":"fixes Whisper _retrieve_segment timestamp offset handling","title":"fix _retrieve_segment timestamps offset bug"}
+{"pr":43267,"decision":"documentation","reason":"adds auto_docstring decoration so generated SAM3 processor docs show the correct preprocess docstring","title":"Add auto_docstring decorator to Sam3ImageProcessorFast"}
+{"pr":43265,"decision":"feature","reason":"adds a new Omnilingual ASR model implementation and tests","title":"Adding Omnilingual ASR models"}
+{"pr":43254,"decision":"defect","reason":"fixes issue 43240 by allowing supported cross-entropy kwargs through fixed_cross_entropy","title":"Add supported kwargs to fixed_cross_entropy"}
+{"pr":43251,"decision":"defect","reason":"fixes issue 43240 by passing cross-entropy kwargs through fixed_cross_entropy","title":"Fix(43240): pass kwargs to nn.functional.cross_entropy"}
+{"pr":43249,"decision":"feature","reason":"adds device propagation support to processor __call__ outputs","title":"[WIP] Processor moves to  in "}
+{"pr":43246,"decision":"defect","reason":"fixes failing GptOss slow tests and quantized test expectations","title":"GptOss slow tests"}
+{"pr":43238,"decision":"defect","reason":"fixes object-detection pipeline batch postprocessing returning only the first image","title":"Fix ObjectDetectionPipeline batch processing bug #31356"}
+{"pr":43213,"decision":"feature","reason":"adds support for selecting specific layers when collecting hidden states or attentions","title":"feat: allow output_hidden_states and output_attensions to record outputs of specific layers"}
+{"pr":43212,"decision":"defect","reason":"adds regression coverage for offline tokenizer loading issue 43200","title":"Add regression test for offline tokenizer loading (fixes #43200)"}
+{"pr":43192,"decision":"feature","reason":"adds Trackio GPU metrics logging support and related documentation","title":"[Trackio] support trackio gpu logging"}
+{"pr":43151,"decision":"defect","reason":"fixes TF32 tests to account for hardware/PyTorch 2.9 availability","title":"Make TF32 tests hardware-aware for PyTorch 2.9+"}
+{"pr":43149,"decision":"defect","reason":"adds serving docs but also fixes stop_strings crash and serve test reliability","title":"docs(serving): add minimal Python client examples for chat completion…"}
+{"pr":43139,"decision":"feature","reason":"optimizes Whisper feature extraction on GPU with caching and tensor return support","title":"[perf] optimize whisper GPU performance"}
+{"pr":43133,"decision":"defect","reason":"fixes flaky SAM-HQ integration tests by tying/loading positional embeddings","title":"Fix flaky SAM-HQ integration tests by adding set_seed"}
+{"pr":43104,"decision":"documentation","reason":"clarifies tokenizer decoder behavior in comments/docs without runtime behavior change","title":"docs: clarify tokenizer decoder behavior in v5 (#43066)"}
+{"pr":43102,"decision":"documentation","reason":"adds CPU vs GPU performance comparison examples to documentation/tutorials","title":"Add CPU vs GPU performance comparison example"}
+{"pr":43096,"decision":"defect","reason":"fixes save_pretrained for quantized models whose quantizer supplies custom serialized state dicts","title":"Fix save_pretrained for quantized models with custom serialization"}
+{"pr":43094,"decision":"feature","reason":"performance-oriented generation refactor to avoid inline GPU synchronization","title":"Avoid inline .item() sync in decoder start token check"}
+{"pr":43088,"decision":"feature","reason":"optimizes generation by caching all-true attention-mask state to avoid repeated GPU syncs","title":"Skip attention_mask.all() GPU-CPU sync during generation"}
+{"pr":43085,"decision":"feature","reason":"adds async_stopping_criteria generation option to reduce GPU-CPU sync overhead","title":"Add async_stopping_criteria flag to reduce GPU-CPU syncs during generation"}
+{"pr":43077,"decision":"other","reason":"source-code spelling cleanup only; not a functional defect or feature","title":"compileable=>compilable"}
+{"pr":43063,"decision":"documentation","reason":"adds explanatory documentation to SegFormer image processor docstring","title":"Improve documentation for SegFormer image processor"}
+{"pr":43056,"decision":"feature","reason":"performance enhancement enabling pinned DataLoader memory in CLM no_trainer example","title":"Perf: enable pin_memory in DataLoader for CLM no_trainer example"}
+{"pr":43044,"decision":"feature","reason":"adds single-scale input support and tests for SAM3 mask decoder","title":"[SAM3] Enable single-scale input support in Mask Decoder"}
+{"pr":43036,"decision":"documentation","reason":"grammar-only quicktour documentation edit","title":"Docs: fix grammar in Pipeline section"}
+{"pr":43028,"decision":"defect","reason":"fixes incorrect default interpolation modes for ViT/EfficientNet/PVT image processors","title":"Fix default interpolation to BICUBIC for ViT, EfficientNet, PVT"}
+{"pr":43020,"decision":"feature","reason":"adds new MiMo-V2-Flash model architecture, conversion script, and tests","title":"Add mimo v2 flash"}
+{"pr":43015,"decision":"defect","reason":"fixes false TF32 warnings in rotary embedding frequency calculation under torch.compile","title":"FIX: TF32 warning (#43012)"}
+{"pr":42982,"decision":"feature","reason":"adds new HumanV causal language model architecture and docs/tests","title":"Add HumanV: decoder-only causal LM"}
+{"pr":42979,"decision":"defect","reason":"fixes mixed-precision dtype mismatch in LlavaNext lm_head logits computation","title":"Fix dtype mismatch in in modeling_llava_next"}
+{"pr":42978,"decision":"feature","reason":"adds a new ViT NEPA model, docs, auto mappings, and tests","title":"Add ViT NEPA"}
+{"pr":42976,"decision":"other","reason":"updates GitHub Actions workflow versions rather than library feature or defect fix","title":"Upgrade GitHub Actions to latest versions"}
+{"pr":42975,"decision":"other","reason":"updates GitHub Actions workflows for Node compatibility rather than library feature or defect fix","title":"Upgrade GitHub Actions for Node 24 compatibility"}
+{"pr":42944,"decision":"feature","reason":"adds support for creating FP8 quantization from config","title":"[Quantization] From config Quantization for FP8"}
+{"pr":42942,"decision":"defect","reason":"fixes continuous batching result retrieval starvation and request iterator termination","title":"Fix result retrieval starvation and terminate request-scoped iteration on completion"}
+{"pr":42919,"decision":"feature","reason":"adds video-token support for the vLLM backend across multimodal processors","title":"[WIP] Video support in vLLM backend"}
+{"pr":42916,"decision":"defect","reason":"fixes TokenizersBackend._decode to honor clean_up_tokenization_spaces","title":"Fix: Apply clean_up_tokenization_spaces in TokenizersBackend._decode"}
+{"pr":42908,"decision":"defect","reason":"fixes GGUF tokenizer imports/loading paths","title":"Fix gguf tokenizers"}
+{"pr":42900,"decision":"defect","reason":"fixes clean_up_tokenization_spaces handling in tokenizer decoding","title":"Fix: Set clean_up_tokenization_spaces"}
+{"pr":42887,"decision":"feature","reason":"adds compressed-tensors transform support while also fixing related tests","title":"[Quantization] [Compressed Tensors] Support Transforms, Fix Tests"}
+{"pr":42881,"decision":"defect","reason":"fixes missing GGUF attn_logit_softcapping config mapping for Gemma2/Gemma3","title":"[GGUF] Add attn_logit_softcapping to Gemma2/Gemma3 config mapping"}
+{"pr":42876,"decision":"documentation","reason":"adds Trainer tensor-parallelism documentation only","title":"Document tensor parallelism configuration with Trainer"}
+{"pr":42865,"decision":"defect","reason":"prevents silent FP8 quantization_config misconfiguration in from_config","title":"Raise explicit error when FP8 is requested via from_config"}
+{"pr":42829,"decision":"feature","reason":"adds new end-to-end exportable object-detection pipeline support","title":"[WIP] End-to-end exportable pipelines (object detection)"}
+{"pr":42824,"decision":"defect","reason":"fixes fast processor tensor-return restriction by adding MLX BatchFeature support","title":"Fix torch only support for fast Processors"}
+{"pr":42816,"decision":"defect","reason":"adds validation that loaded tokenizer.json components match mapped tokenizer implementation","title":"validate tokenizer components"}
+{"pr":42793,"decision":"defect","reason":"adjusts BitNet quantization integration test expectation for green CI","title":"[Quantization] Fixing last issues for a green 2026 CI hopefully"}
+{"pr":42785,"decision":"documentation","reason":"corrects Mimi model documentation values only","title":"Fixing wrong information in Mimi Docs"}
+{"pr":42781,"decision":"feature","reason":"adds new VibeVoice Realtime model family and related docs/tests","title":"Add VibeVoice Realtime"}
+{"pr":42774,"decision":"defect","reason":"fixes None membership TypeError in video_processor_class_from_name without torchvision","title":"Fix: add None check for extractors in video_processor_class_from_name"}
+{"pr":42767,"decision":"feature","reason":"adds DeepSeek v3.2 model/config/auto mappings despite fix framing","title":"fix: add mapping of deepseek_v32 model type"}
+{"pr":42765,"decision":"feature","reason":"adds distributed training CI, pytest markers, and training test mixins","title":"Add distributed training CI"}
+{"pr":42744,"decision":"other","reason":"WIP/repro PR for FP8 scale investigation rather than a finished defect or feature","title":"[FP8 Devstral 24B] Repro PR"}
+{"pr":42742,"decision":"other","reason":"pure non-behavior cleanup removing redundant else","title":"Remove redundant else in activations.py"}
+{"pr":42717,"decision":"defect","reason":"fixes incorrect tensor type annotations in image transform helpers","title":"image_transforms: fix tensor annotations"}
+{"pr":42706,"decision":"other","reason":"minor cosmetic/nit cleanup in Parakeet modeling files","title":"Nit parakeet"}
+{"pr":42668,"decision":"defect","reason":"fixes processor from_pretrained robustness for subprocessor loading/saving","title":"More robust processor from pretrained"}
+{"pr":42665,"decision":"feature","reason":"adds offloading/model-loading optimization with tests","title":"Some optimizations for offloading"}
+{"pr":42655,"decision":"feature","reason":"adds batched speculative decoding support","title":"New Feature: Enabling Speculative Decoding with Batch Size > 1 (If draft and target model share tokenizer)"}
+{"pr":42631,"decision":"defect","reason":"fixes GraniteMoeHybrid torch.export compatibility","title":"Make GraniteMoeHybridModel compatible with torch.export"}
+{"pr":42598,"decision":"defect","reason":"fixes unwanted lazy import failure in audio pipelines","title":"[pipeline] fix unwanted import failure"}
+{"pr":42588,"decision":"documentation","reason":"documents serving /v1/models endpoint","title":"Document the /v1/models endpoint"}
+{"pr":42572,"decision":"documentation","reason":"adds SqueezeBERT doctest documentation example","title":"docs: add doctest for SqueezeBERT"}
+{"pr":42542,"decision":"defect","reason":"handles get_input_embeddings returning None to avoid enable_input_require_grads failure","title":"handle get_input_embeddings() on models like gemma3 gracefully"}
+{"pr":42527,"decision":"documentation","reason":"adds SwiftFormer doctest documentation examples","title":"Added doctests for SwiftFormer model"}
+{"pr":42521,"decision":"defect","reason":"fixes FSDP2 TrainingArguments config being ignored/defaulting to FSDP1","title":"Fix FSDP2 defaulting to version 1 in TrainingArguments; add dynamic plugin param passthrough"}
+{"pr":42496,"decision":"feature","reason":"adds context parallel training support in Trainer","title":"feat: allow CP with trainer"}
+{"pr":42493,"decision":"defect","reason":"fixes local pretrained model paths with trailing OS separator","title":"fix: remove trailing os sep in local pretrained model path"}
+{"pr":42467,"decision":"defect","reason":"fixes StaticCache crash behavior","title":"Fixes StaticCache Crashes "}
+{"pr":42461,"decision":"feature","reason":"broad RMSNorm implementation refactor to use torch.nn.functional.rms_norm","title":"Refactor RMSNorm implementations to use torch.nn.functional.rms_norm"}
+{"pr":42453,"decision":"feature","reason":"adds SDPA/FlashAttention attention interface support for T5/MT5","title":"Add SDPA and FlashAttention support to T5"}
+{"pr":42446,"decision":"defect","reason":"fixes StopIteration/DataParallel dtype access in SmolVLM tests","title":"Fix DataParallel dtype access in smolvlm"}
+{"pr":42437,"decision":"other","reason":"broad tokenizer refactor/maintenance rather than user-facing feature or defect fix","title":"One tok typing"}
+{"pr":42432,"decision":"feature","reason":"adds a new VideoToTextPipeline with frame sampling and tests","title":"Add VideoToTextPipeline with smart frame sampling and system prompts"}
+{"pr":42430,"decision":"other","reason":"pipeline cleanup/refactor rather than a distinct defect fix or new feature","title":"\ud83d\udea8 Clean up `image-text-to-text` pipeline"}
+{"pr":42424,"decision":"defect","reason":"attempts to fix OOM/use_cache propagation in Qwen model tests","title":"[WIP] attempt to fix ooms in tests"}
+{"pr":42415,"decision":"other","reason":"broad special-token/tokenizer cleanup maintenance","title":"initial clean"}
+{"pr":42413,"decision":"feature","reason":"adds Chatterbox/S3Gen/S3Tokenizer audio model support","title":"Add chatterbox support"}
+{"pr":42412,"decision":"other","reason":"typing modernization in example files only","title":"Replace Optional and Union typing with | in examples"}
+{"pr":42403,"decision":"feature","reason":"SAM3 release/backport adding SAM3 model family support","title":"Sam3 release on v4.57.3"}
+{"pr":42385,"decision":"defect","reason":"fixes weight tying logic for tied embeddings","title":"Fix weight tying logic between _tied_weights_keys and tie_word_embeddings"}
+{"pr":42345,"decision":"feature","reason":"adds native PyTorch SDPA/flash attention support for GPT-OSS","title":"GPT-OSS Flash Attention and memory-efficient attention via Native PyTorch SDPA"}
+{"pr":42311,"decision":"defect","reason":"guards Blip2Processor against None num_query_tokens","title":"Fix: Guard against None num_query_tokens in Blip2Processor (to avoid TypeError)"}
+{"pr":42310,"decision":"feature","reason":"adds a new Moondream3 model implementation","title":"[WIP] Add moondream3 model"}
+{"pr":42292,"decision":"documentation","reason":"updates generate() documentation for max_new_tokens guidance","title":"docs: clarify recommended usage of max_new_tokens in generate()"}
+{"pr":42277,"decision":"documentation","reason":"updates kernels integration documentation","title":"doc(kernels): update kernels integration documentation"}
+{"pr":42256,"decision":"feature","reason":"proposes AutoAWQ inference component integration","title":"Integrate Core AutoAWQ Inference Components into Transformers"}
+{"pr":42244,"decision":"defect","reason":"fixes core torchao model loading behavior","title":"[core] Fix torchao loading"}
+{"pr":42229,"decision":"feature","reason":"adds OpenPangu MoE model support","title":"Add openpangu_moe model"}
+{"pr":42228,"decision":"defect","reason":"fixes device handling for variable segmentation labels","title":"Support .to(device) or Device Aware Handling for Segmentation Labels in EOMTImageProcessor #42205"}
+{"pr":42210,"decision":"feature","reason":"adds Evo2 model support","title":"[WIP] started adding support for evo2"}
+{"pr":42166,"decision":"feature","reason":"adds InternVL Flash model support","title":"add internvl_flash model"}
+{"pr":42134,"decision":"feature","reason":"adds AutoMergeAdapters utility for LoRA adapters","title":"Add AutoMergeAdapters utility for merging multiple LoRA adapters with…"}
+{"pr":42133,"decision":"defect","reason":"fixes Qwen MoE load-balancing loss computation outside training","title":"Fix qwen moe Load balancing loss calculation outside training"}
+{"pr":42131,"decision":"feature","reason":"adds pattern argument handling to Mistral tokenizer converter integration","title":"Mistral Tokenizer Converter Script - Initialization with Pattern Argument"}
+{"pr":42130,"decision":"defect","reason":"refactors logging to satisfy type checks","title":"Try refactoring logging to make type checks pass"}
+{"pr":42127,"decision":"defect","reason":"standardizes convolution output length calculation for audio models","title":"Standardize conv len function for audio models"}
+{"pr":42124,"decision":"documentation","reason":"adds Qwen3 usage documentation","title":"📚 docs(qwen3): add comprehensive usage examples and model details"}
+{"pr":42112,"decision":"feature","reason":"adds max_thinking_tokens generation control for reasoning models","title":"Add max_thinking_tokens for reasoning models (issue #42111)"}
+{"pr":42098,"decision":"defect","reason":"fixes Qwen2-Audio mel length computation","title":"Fix mel length computation in Qwen2-Audio"}
+{"pr":42051,"decision":"defect","reason":"fixes shared mutable model_input_names default state","title":"Fix model_input_names singleton issue causing shared state"}
+{"pr":42039,"decision":"other","reason":"WIP cleanup/refactor of XCodec internals rather than a discrete feature or defect fix","title":"[WIP] 🚨 clean xcodec 🧼"}
+{"pr":42000,"decision":"documentation","reason":"docstring-only naming clarification in Mixtral block","title":"Fix Mixtral: Docstring uses consistent 'top_k_index' and 'top_k_weights' in MixtralSparseMoeBlock"}
+{"pr":41992,"decision":"feature","reason":"adds a new HF exporters framework and integrations","title":"[PoC] HF exporters"}
+{"pr":41980,"decision":"defect","reason":"corrects inaccurate type hints across configuration classes","title":"Correct type hint in config models"}
+{"pr":41977,"decision":"feature","reason":"adds Phi-3.5 Vision model support","title":"Add Phi3.5 Vision Model"}
+{"pr":41973,"decision":"defect","reason":"fixes imports broken by huggingface_hub v1.0 changes","title":"Fix import error with huggingface_hub v1.0.0+"}
+{"pr":41967,"decision":"feature","reason":"improves RoPE-related typing annotations","title":"feat: RoPE-related typing improvements"}
+{"pr":41928,"decision":"defect","reason":"adds a clear missing-dependency error for Voxtral AutoTokenizer","title":"fix: add clear error message when mistral-common is missing for AutoTokenizer loading Voxtral"}
+{"pr":41904,"decision":"defect","reason":"fixes loss averaging for variable batch sizes","title":"Fix inaccurate eval and train loss computation with variable batch sizes"}
+{"pr":41901,"decision":"feature","reason":"updates ExecuTorch pytree registration for DynamicCache","title":"[executorch] Update pytree registration for DynamicCache"}
+{"pr":41899,"decision":"feature","reason":"adds configurable checkpoint save limits","title":"Testing checkpoint limit changes from PR #37196"}
+{"pr":41895,"decision":"feature","reason":"adds a Telugu sentiment classification example","title":"Add Telugu Sentiment Classification Example using DistilBERT"}
+{"pr":41886,"decision":"feature","reason":"adds FG-CLIP2 model support","title":"ADD FG-CLIP2"}
+{"pr":41882,"decision":"feature","reason":"adds Flash Dynamic Mask Attention support","title":"Support fdma for models with attention bias"}
+{"pr":41880,"decision":"documentation","reason":"adds Indonesian README localization","title":"Indonesian Language Support for ReadMe"}
+{"pr":41879,"decision":"defect","reason":"fixes ProcessorMixin handling of multiple tokenizers","title":"Fix/processor multiple tokenizers"}
+{"pr":41855,"decision":"defect","reason":"adds missing methods to Mistral common tokenizer wrapper","title":"Add Mistral tokenizer missing methods"}
+{"pr":41851,"decision":"defect","reason":"fixes ProcessorMixin deepcopy/saving with multiple tokenizers","title":"Fix deepcopy in ProcessorMixin.to_dict for GemmaTokenizerFast"}
+{"pr":41844,"decision":"defect","reason":"fixes FSDPv2 checkpoint saving on TPU by recursively unwrapping models","title":"Fix FSDPv2 checkpoint saving on TPU by using recursive unwrap"}
+{"pr":41827,"decision":"defect","reason":"fixes Flash Attention torch-compile behavior for position ids/packed sequences","title":"[`Flash Attention`] Disable packed sequences with pos ids only during torch compile"}
+{"pr":41823,"decision":"feature","reason":"adds/updates LFM2-VL integration behavior for vLLM","title":"Lfm2-VL vllm"}
+{"pr":41807,"decision":"documentation","reason":"README documentation link update only","title":"git commit -m \"Fix: corrected outdated documentation link in README.md\""}
+{"pr":41800,"decision":"documentation","reason":"examples README wording clarification only","title":"Increasing clarity"}
+{"pr":41798,"decision":"feature","reason":"adds p-less decoding sampling methods to generation","title":"p-less Sampling:  A Robust Hyperparameter-Free Approach for LLM Decoding"}
+{"pr":41797,"decision":"feature","reason":"adds DeepSeek-OCR model support","title":"Add deepseek ocr"}
+{"pr":41794,"decision":"other","reason":"repo-wide lint-rule enablement and mechanical cleanup rather than user-facing feature or discrete defect fix","title":"Enable flake8-pie rules"}
+{"pr":41776,"decision":"feature","reason":"adds safety-checking infrastructure for text generation","title":"Add safety checking infrastructure for text generation"}
+{"pr":41754,"decision":"feature","reason":"adds ExecuTorch pytree registration support for StaticCache","title":"Add pytree registration for static cache"}
+{"pr":41734,"decision":"defect","reason":"fixes CUDA errors during sharded Qwen3 generation with invalid hidden states","title":"Fix CUDA errors in sharded generation with Qwen3"}
+{"pr":41733,"decision":"documentation","reason":"updates CLI pipe/default format documentation across model docs","title":"transformers CLI documentation issue"}
+{"pr": 41724, "decision": "defect", "reason": "fixes misleading EncoderDecoderModel decoder_input_ids warning", "title": "Fix confusing warning in EncoderDecoderModel when creating decoder_input_ids from labels"}
+{"pr": 41721, "decision": "defect", "reason": "fixes Qwen3-VL processor batching for multi-image samples", "title": "Fix Qwen3-VL Processor flattening multi-image batches (fix #41709)"}
+{"pr": 41718, "decision": "defect", "reason": "raises a clearer ImportError for Voxtral tokenizer when mistral-common is missing", "title": "AutoTokenizer: clear ImportError when loading Voxtral without mistral-common + unit test"}
+{"pr": 41710, "decision": "documentation", "reason": "Korean translation of documentation page", "title": "🌐 [i18n-KO] Translated `main_classes/backbones.md` to Korean"}
+{"pr": 41701, "decision": "defect", "reason": "fixes dtype mismatch in Qwen3-VL positional embeddings under mixed precision", "title": "Fix qwen3_vl mix precision dtype"}
+{"pr": 41698, "decision": "defect", "reason": "fixes tokenizer check script dataset access and safer checkpoint selection", "title": "Fix tokenizer check script: safe dataset access, default checkpoints, and tested in dry-run mode"}
+{"pr": 41693, "decision": "feature", "reason": "large ViT/vision-model refactor to updated modeling standards", "title": "🚨 Refactor ViT to updated standards"}
+{"pr": 41687, "decision": "defect", "reason": "fixes DataCollatorWithFlattening crash on scalar integer labels", "title": "fix(data): Handle integer labels in DataCollatorWithFlattening"}
+{"pr": 41654, "decision": "defect", "reason": "improves LLaMA tokenizer missing-vocab error message", "title": "Improve LLaMA tokenizer error when vocab is missing: suggest installi\u2026"}
+{"pr": 41631, "decision": "defect", "reason": "fixes incorrect XNLI premise/hypothesis field access in tokenizer checker", "title": "Incorrect access of dataset field fixed"}
+{"pr":41611,"decision":"documentation","reason":"adds Trainer custom loss documentation/example; code-file noise appears from stacked branch","title":"Docs add custom loss example"}
+{"pr":41609,"decision":"defect","reason":"fixes Gemma GGUF tokenizer auto-detection selecting the wrong tokenizer","title":"Fix gemma gguf tokenizer"}
+{"pr":41606,"decision":"defect","reason":"fixes ProcessorMixin passing modality-specific kwargs to incompatible subprocessors","title":"fix(processing): Filter kwargs in ProcessorMixin call to prevent Type\u2026"}
+{"pr":41597,"decision":"documentation","reason":"standardizes RoBERTa model documentation/card","title":"Standardize RoBERTa model card following issue #36979"}
+{"pr":41594,"decision":"feature","reason":"adds a new beginner-friendly sentiment analysis example and tests","title":"Add beginner-friendly sentiment analysis example"}
+{"pr":41593,"decision":"feature","reason":"adds a multi-label text classification example and metric test","title":"examples: add multi-label text classification (BCEWithLogitsLoss, met\u2026"}
+{"pr":41592,"decision":"defect","reason":"improves the AutoTokenizer error for Voxtral tokenizer loads missing mistral-common","title":"Improve AutoTokenizer error message for Voxtral models missing mistral-common"}
+{"pr":41584,"decision":"defect","reason":"adds a clearer error for missing SentencePiece model files in Llama tokenizer loading","title":"Add clear error message for missing SentencePiece model in `get_spm_processor` (fix #41553)"}
+{"pr":41565,"decision":"documentation","reason":"Korean documentation translation update","title":"\ud83c\udf10 [i18n-KO] Updated `perf_train_gpu_many.md`"}
+{"pr":41561,"decision":"feature","reason":"optimizes Mamba2 computation memory use by replacing a broadcasted multiply with einsum","title":"Optimize Mamba2 memory usage by replacing broadcast with einsum"}
+{"pr": 41557, "decision": "other", "reason": "adds only an inline question/comment about Llama4 norm naming, not a code change implementing a fix or feature", "title": "Update modeling_llama4.py"}
+{"pr": 41531, "decision": "documentation", "reason": "Korean documentation translation for video processor docs", "title": "🌐 [i18n-KO] Translated `video_processor.md` to Korean"}
+{"pr": 41528, "decision": "feature", "reason": "adds DeiT position encoding interpolation support and tests", "title": "Add position encoding interpolation to DeiT"}
+{"pr": 41527, "decision": "documentation", "reason": "Korean documentation translation for quantization selection docs", "title": "🌐 [i18n-KO] Translated selecting.md to Korean"}
+{"pr": 41524, "decision": "feature", "reason": "adds a max_eval_batches TrainingArguments option to limit evaluation batches", "title": "Add max_eval_batches argument to TrainingArguments"}
+{"pr": 41523, "decision": "feature", "reason": "adds ConvNext fast image processor coverage to the test matrix", "title": "Add test coverage for ConvNextImageProcessorFast"}
+{"pr": 41522, "decision": "defect", "reason": "skips initialization for int8 quantized Qwen2.5-VL weights to avoid normal_ on integer tensors", "title": "Fix _init_weights to safely skip int8 quantized weights"}
+{"pr": 41521, "decision": "defect", "reason": "sets forced_bos_token_id on generation_config in translation example when target language is forced", "title": "Fix forced_bos_token_id not set in generation_config"}
+{"pr": 41491, "decision": "feature", "reason": "adds TrainingArguments option to skip gradient clipping when no gradients require clipping", "title": "Add skip_unnecessary_grad_clip to TrainingArguments for optimized gradient clipping"}
+{"pr": 41490, "decision": "defect", "reason": "skips Qwen2.5-VL initialization for int8 quantized tensors to avoid integer weight init errors", "title": "Fix _init_weights to safely skip int8 tensors in Qwen2_5_VL model"}
+{"pr":45702,"decision":"defect","reason":"fixes dataclass/model-output autodoc decorator ordering that was mutating the shared parent __init__ docstring","title":"Reorder decorators for autodoc and dataclass"}
+{"pr":45699,"decision":"feature","reason":"adds a new compressed-tensors FP8 kernel integration and quantizer path","title":"Add FP8 kernel acceleration for compressed-tensors quantized models"}
+{"pr":45694,"decision":"defect","reason":"fixes TrainingArguments batch-size properties when accelerator split_batches is enabled","title":"Fix train_batch_size and eval_batch_size to respect split_batches config"}
+{"pr":45690,"decision":"feature","reason":"adds reasoning-content support to the serve/chat-completion path","title":"[serve] Support for reasoning "}
+{"pr":45687,"decision":"defect","reason":"fixes MoE torch.histc integer input failure on MPS/non-CUDA backends","title":"fix: Made histc_input robust for broader hardware"}
+{"pr":45683,"decision":"defect","reason":"excludes audio modules from quantization conversion to avoid uint8 torch.finfo crashes in multimodal inference","title":"Exclude audio modules from conversion process"}
+{"pr":45682,"decision":"defect","reason":"restores broken PEFT LoRA hotswapping after model-loading changes","title":"FIX Restore LoRA hotswapping functionality"}
+{"pr":45681,"decision":"defect","reason":"restores TokenizersBackend dispatch override for DeepSeek tokenizer round-trip correctness","title":"Restore TokenizersBackend override for DeepSeek V3/R1 tokenizer dispatch"}
+{"pr":45679,"decision":"other","reason":"CI/test-selection change that removes slow markers from PEFT tests rather than adding product functionality or fixing runtime behavior","title":"TST Run fast PEFT tests in normal CI"}
+{"pr":45678,"decision":"defect","reason":"fixes slow-test isolation failure caused by shared config mutation in flash_attn_from_config coverage","title":"Fix shared config mutation issue in flash_attn_from_config"}
+{"pr":41488,"decision":"other","reason":"placeholder PR creating a file named '1' with no meaningful project change","title":"Create 1"}
+{"pr":41485,"decision":"defect","reason":"fixes dtype mismatch in SmolVLM2/PerceptionLM modeling paths","title":"Fix smolvlm2 dtype mismatch final"}
+{"pr":41458,"decision":"feature","reason":"adds optional ScatterMoE kernel integration support for Granite MoE models","title":"Adding ScatterMoE kernel support for Granite models. "}
+{"pr":41441,"decision":"feature","reason":"extends HfArgumentParser support for Union type handling","title":"Enhance the handling of Union types in HfArgumentParser"}
+{"pr":41419,"decision":"feature","reason":"adds QAT support for finegrained FP8 quantization integration","title":"First QAT for Finegrained FP8"}
+{"pr":41406,"decision":"other","reason":"v5 deprecation/removal cleanup for cache classes rather than a defect fix or additive feature","title":"\ud83d\udea8 [v5] Remove deprecated cache classes"}
+{"pr":41362,"decision":"documentation","reason":"README banner/image documentation-only change","title":"Added Hacktoberfest banner image to README.md"}
+{"pr":41356,"decision":"feature","reason":"adds new DEIMv2 model, image processor, docs, and tests","title":"Add DEIMv2 model, image processor, and basic tests"}
+{"pr":41349,"decision":"feature","reason":"adds a new 3D parallelism training example script","title":"Create (3d_parrallel_v2.py) - Add 3D parallelism training example script"}
+{"pr":41333,"decision":"feature","reason":"adds DeepSeek-VL-V2 model, processor, image processor, and auto mappings","title":"Add DeepseekVLV2 Model"}
+{"pr":41330,"decision":"other","reason":"test-only change for offline-mode hermeticity rather than product feature or library defect fix","title":"Unskip and fix offline mode tests, use HF_HUB_OFFLINE, make hermetic"}
+{"pr":41329,"decision":"defect","reason":"fixes Python free-threading/GIL=0 regex-cache segfaults in tokenizers and regex-heavy paths","title":"Fix GIL=0 segfault and Add GIL=0 compat for regex paths"}
+{"pr":41319,"decision":"defect","reason":"fixes Gemma3 torch.export failure by replacing a data-dependent Python assertion with torch._check","title":"Use torch._check instead of a test in Gemma3Model"}
+{"pr":41315,"decision":"feature","reason":"adds version-based model deprecation/deletion warnings and AutoClass exception infrastructure","title":"[model deprecations] Define new version-based model deprecation/deletions with user warnings/exceptions"}
+{"pr":41313,"decision":"defect","reason":"fixes Switch Transformers jitter noise being applied to expert inputs instead of routing only","title":"Jitter noise PR"}
+{"pr":41312,"decision":"other","reason":"test-only offline-mode hermeticity change rather than a library feature or runtime defect fix","title":"tests: unskip and fix offline mode test using HF_HUB_OFFLINE + hermetic cache warmup"}
+{"pr":41304,"decision":"defect","reason":"fixes equality-vs-assignment typo preventing GPTQ device_map from being updated to CUDA","title":"Fix equality-vs-assignment bug in GptqHfQuantizer.update_device_map"}
+{"pr":41299,"decision":"feature","reason":"adds trainer evaluation-step limiting support copied from a feature branch","title":"copied changes from soghomon-b:add-eval-step-limit-31561"}
+{"pr":41291,"decision":"feature","reason":"adds DEIMv2 model, image processor, docs, and tests","title":"Add-Deimv2"}
+{"pr":41273,"decision":"defect","reason":"fixes int8/quantized model loading by skipping missing-weight initialization for quantized models","title":"fix(quantization): Skip weight initialization for quantized models"}
+{"pr":41272,"decision":"feature","reason":"adds new HRM model integration, docs, conversion script, and tests","title":"feat: Add HRM Model"}
+{"pr":41254,"decision":"documentation","reason":"README-only documentation/banner/contributing/license update","title":"docs: Add Hacktoberfest banner, Contributing and License sections to README"}
+{"pr":41251,"decision":"feature","reason":"adds DeepSeek 3.2 experimental model, docs, integrations, and tests","title":"Add deepseek 3.2 exp"}
+{"pr":41239,"decision":"defect","reason":"fixes T5Gemma top-level configuration by exposing num_hidden_layers","title":"Add num_hidden_layers to t5gemma's top level config"}
+{"pr":41224,"decision":"feature","reason":"adds DINOv3ViT image classification head support, docs, and tests","title":"Add DINOv3ViTForImageClassification support"}
+{"pr":41215,"decision":"defect","reason":"fixes CLIP-family memory leak during repeated feature extraction","title":"Fix CLIP memory leak causing 600-800MB accumulation per batch"}
+{"pr":41202,"decision":"feature","reason":"standardizes audio keyword naming and deprecation handling","title":"[WIP] standardize audio kwargs"}
+{"pr":41169,"decision":"defect","reason":"fixes TorchDynamo crash by validating StaticCache offloading argument combination","title":"Fix TorchDynamo crash in StaticCache by validating offloading and offload_only_non_sliding arguments"}
+{"pr":41162,"decision":"documentation","reason":"adds Sinhala README translation and README link update","title":"Add Sinhala (\u0dc3\u0dd2\u0d82\u0dc4\u0dbd) translation of README"}
+{"pr":41160,"decision":"documentation","reason":"documentation-only update to doc-builder tip syntax across docs","title":"[docs] update tips syntax"}
+{"pr":41159,"decision":"feature","reason":"adds total_train_batch_size training argument and DeepSpeed/trainer support","title":"Support setting total_train_batch_size."}
+{"pr":41144,"decision":"feature","reason":"adds automatic DeepSpeed ZeRO-to-universal checkpoint conversion support","title":"Support automatic conversion from zero checkpoint to universal checkpoint."}
+{"pr":41132,"decision":"defect","reason":"fixes SpeechT5 ASR chunking by making inputs_to_logits_ratio a property value","title":"fix(SpeechT5Config): missing annotation on `inputs_to_logits_ratio` property"}
+{"pr":41121,"decision":"defect","reason":"fixes InternVL multi-video preprocessing frame dropping","title":"fix: resolve the unexpected video frame drop issue of the InternVL model with multiple video inputs"}
+{"pr":41116,"decision":"feature","reason":"adds native MiniCPM3 model support","title":"Add MiniCPM3"}
+{"pr":41105,"decision":"defect","reason":"fixes is_torch_neuroncore_available to honor its check_device argument","title":"Fix is_torch_neuroncore_available"}
+{"pr":41097,"decision":"defect","reason":"fixes unnecessary TorchDynamo graph breaks/synchronization in flash attention unpadding","title":"Delay and probably avoid unnecessary graph breaks in _upad_input of modeling_flash_attention_utils.py"}
+{"pr":41095,"decision":"feature","reason":"adds LLaVA-OneVision-1.5 model support","title":"Add LLaVA-OneVision-1.5 model and related configurations"}
+{"pr":41077,"decision":"defect","reason":"fixes T5Gemma missing num_hidden_layers for cache/generation utilities","title":"Fix: add num_hidden_layers property to T5GemmaConfig and add test for use_cache"}
+{"pr":41075,"decision":"defect","reason":"fixes nondeterministic Qwen3 greedy generation when sampling parameters are set in model defaults","title":"Fix Qwen3 deterministic generation when do_sample=False and num_beams=1 for Greedy Decoding"}
+{"pr":41053,"decision":"feature","reason":"adds experimental Qwen3 MoE expert/grouped-gemm implementation changes","title":"Qwen3 moe"}
+{"pr":41041,"decision":"feature","reason":"adds WIP YuE audio model tokenizer/processor/feature extractor files","title":"[WIP] Add YuE model"}
+{"pr":41040,"decision":"feature","reason":"adds Keye VL 1.5 multimodal model support","title":"Add Keye vl 8b 1.5"}
+{"pr":41037,"decision":"other","reason":"test-only Apertus integration coverage without a product feature or defect fix","title":"Tests: Apertus integration tests"}
+{"pr":41035,"decision":"documentation","reason":"updates speech-recognition example README documentation","title":"docs: update speech recognition examples to use modern Common Voice d\u2026"}
+{"pr":41033,"decision":"feature","reason":"adds torch.export support for audio feature extractors","title":"feat: make audio feature extractors torch.export-able"}
+{"pr":41024,"decision":"feature","reason":"adds a deprecation warning/migration path for ConditionalDetrImageProcessor max_size","title":"Deprecate `max_size` in ConditionalDetrImageProcessor with warning"}
+{"pr":41022,"decision":"documentation","reason":"Korean translation of backbones documentation","title":"\ud83c\udf10 [i18n-KO] Translated `backbones.md` to Korean"}
+{"pr":41021,"decision":"documentation","reason":"Korean translation of video processors documentation","title":"\ud83c\udf10 [i18n-KO] Translated `video_processors.md` to Korean"}
+{"pr":41009,"decision":"feature","reason":"adds Lexa-Delta model/config/tokenizer support","title":"Add Lexa-Delta model support"}
+{"pr":40976,"decision":"feature","reason":"changes assisted generation default thresholds and scheduling behavior","title":"Better defaults for assisted generation"}
+{"pr":40962,"decision":"feature","reason":"adds the Isaac multimodal model implementation and registrations","title":"perceptron: Isaac-0.1 implementation"}
+{"pr":40954,"decision":"defect","reason":"fixes processor creation ignoring a user-provided chat_template override","title":"Fix Issue #40913: Respect user-provided chat_template parameter in processor creation"}
+{"pr":40908,"decision":"defect","reason":"fixes MoE load-balancing loss incompatibility when past_key_values shorten router logits","title":"Fix  incompatible with "}
+{"pr":40898,"decision":"feature","reason":"adds encoder-only sequence classification heads for T5, MT5, and UMT5","title":"Adding [T5/MT5/UMT5]EncoderForSequenceClassification"}
+{"pr":40888,"decision":"documentation","reason":"updates help text/documentation for chat and serve commands","title":"DOC Fix help for chat and serve commands"}
+{"pr":40887,"decision":"feature","reason":"refactors generation output handling to support cleaner decoding methods","title":"Refactor output handling in generate for cleaner decoding methods"}
+{"pr":40877,"decision":"documentation","reason":"README-only badge/markup change despite bug-fix title","title":"Bug #40833: Fix for kv_offset calculation for mixed padding"}
+{"pr":40871,"decision":"feature","reason":"adds benchmark framework type hints, GPU metrics helper, and configuration utilities","title":"Refactor benchmark utils: add type hints, GPU metrics helper, and con…"}
+{"pr":40870,"decision":"feature","reason":"adds an option to move generation logits to CPU to reduce VRAM use","title":"Reduce vRAM usage during generation by allowing to transfer logits to CPU"}
+{"pr":45703,"decision":"other","reason":"typing/checking maintenance chore; no user-facing feature or defect fix","title":"chore(typing): add ty type checking for 10 utility files"}
+{"pr":40861,"decision":"feature","reason":"adds model support for grouped Mamba2 variants across hybrid architectures","title":"Support n_groups>1 for mamba2 "}
+{"pr":40857,"decision":"defect","reason":"fixes incorrect train_tokens_per_second metric after resuming from checkpoints","title":"Token"}
+{"pr":40840,"decision":"feature","reason":"adds structured pruning support for Qwen2/Qwen3 layer dimensions","title":"feat: add qwen2 pruning support"}
+{"pr":40820,"decision":"feature","reason":"adds benchmark definitions for several model families","title":"Add models to benchmarks"}
+{"pr":40790,"decision":"defect","reason":"handles missing or corrupted checkpoints during Trainer resume","title":"Handle loading non-existent checkpoints or corrupted checkpoints."}
+{"pr":40783,"decision":"defect","reason":"treats quantization_config=None the same as omitting it in AutoModel.from_pretrained","title":"Fix None quantization_config equivalence with omitted param in AutoModel.from_pretrained"}
+{"pr":40759,"decision":"feature","reason":"adds structured pruning support for Qwen3 layer dimensions","title":"feat: add qwen3 pruning support"}
+{"pr":40756,"decision":"feature","reason":"adds a slow-tokenizer conversion path for NVIDIA Canary tokenizer","title":"[WIP] Add Canary"}
+{"pr":40755,"decision":"feature","reason":"adds TimesFM forecasting support for covariates","title":"[TimesFM] Add support for forecasting with covariates"}
+{"pr":40740,"decision":"defect","reason":"fixes assistant-model generation configuration not receiving user parameters","title":"Configure assistant model's generation_config with user parameters"}
+{"pr":40738,"decision":"documentation","reason":"RoFormerTokenizer installation documentation only","title":"Docs: Clarify rjieba installation for RoFormerTokenizer"}
+{"pr":40736,"decision":"documentation","reason":"Korean documentation translation only","title":"\ud83c\udf10 [i18n-KO] Translated `jan.md` to Korean"}
+{"pr":40728,"decision":"feature","reason":"adds OpenTelemetry support to transformers serve","title":"feat(serve): add OTEL"}
+{"pr":40714,"decision":"documentation","reason":"README wording/version documentation update only","title":"Remove TF and Flax from README"}
+{"pr":40695,"decision":"defect","reason":"corrects deprecated/incorrect Qwen task mapping tags","title":"remove vision2seq vs image-text-to-text"}
+{"pr":40670,"decision":"feature","reason":"adds configuration path for Gemma 2 without post layer norms","title":"Add ability to run Gemma 2 models without post layer norm"}
+{"pr":40648,"decision":"other","reason":"dependabot dependency bump for example requirements","title":"Bump torch from 2.7.1 to 2.8.0 in /examples/flax/vision"}
+{"pr":40640,"decision":"defect","reason":"fixes Trainer resume data position when worker count changes","title":"Resume training by trained samples to avoid elastic job loss or over-reading of data."}
+{"pr":40637,"decision":"feature","reason":"adds a new OpenPangu model implementation","title":"[WIP]Add openpangu_dense model"}
+{"pr":40633,"decision":"feature","reason":"adds Trainer API support for user-provided Accelerate Accelerator","title":"Add support for Custom Accelerate Instance in Trainer"}
+{"pr":40587,"decision":"feature","reason":"adds new vision utility helpers and tests","title":"feat(utils): add vision utils for embedding images and getting the hidden size"}
+{"pr":40563,"decision":"defect","reason":"fixes DINOv3 intermediate hidden-state output behavior","title":"fix to get output of intermediate output of dinov3 for more use case"}
+{"pr":40546,"decision":"feature","reason":"adds new VibeVoice audio model and pipeline support","title":"Implement VibeVoice "}
+{"pr":40524,"decision":"documentation","reason":"documentation-only perplexity guide change","title":"Use begin_of_sequence token in all sliding windows for correct model behaviour"}
+{"pr":40520,"decision":"feature","reason":"adds faster stop_strings stopping criteria for generation","title":"[generate] add faster `stop_strings` stopping criteria"}
+{"pr":40515,"decision":"feature","reason":"adds tokenizer selection utility based on corpus analysis","title":"Add Context-Aware Tokenizer Selection Utility Based on Corpus Analysis"}
+{"pr":40505,"decision":"feature","reason":"refactors SigLIP-like model implementations","title":"Refactor Siglip-like models"}
+{"pr":40493,"decision":"defect","reason":"fixes dtype fallback behavior for Colab bf16/fp16/fp32 availability","title":"Update dtypes to suit colab bf16 -> fp16 -> fp32."}
+{"pr":40492,"decision":"defect","reason":"guards debug/image/masking utilities against divide-by-zero errors","title":"avoid divid zero errors."}
+{"pr": 40473, "decision": "other", "reason": "test-only change unskipping tokenizer parity checks", "title": "[tests] Unskip DeBERTaV2 tokenizer parity tests; re-enable fast/slow checks"}
+{"pr": 40471, "decision": "documentation", "reason": "standardizes CodeGen model documentation/card", "title": "DOC: Standardize CodeGen model card (issue #36979)"}
+{"pr": 40465, "decision": "documentation", "reason": "adds Korean translation of tools documentation", "title": "🌐 [i18n-KO] Translated `tools.md` to Korean"}
+{"pr": 40464, "decision": "documentation", "reason": "adds Korean translation of agents documentation", "title": "🌐 [i18n-KO] Translated `agents.md` to Korean"}
+{"pr": 40448, "decision": "feature", "reason": "adds MiniCPM-V 4.5 model support", "title": "[model] Support MiniCPM-V 4.5"}
+{"pr": 40446, "decision": "feature", "reason": "adds sorted binary mask conversion helper for Mask2Former image processing", "title": "Add convert_segmentation_map_to_binary_masks_sorted function for hand…"}
+{"pr": 40438, "decision": "defect", "reason": "fixes automatic label name detection for a single provided label", "title": "Resolve automatic label name detection when single label provided"}
+{"pr": 40425, "decision": "defect", "reason": "fixes quantized parameter checks when safetensors values are slices", "title": "Fix check_quantized_param method when param_value is a safetensors slice"}
+{"pr": 40404, "decision": "documentation", "reason": "updates GPT-J model card documentation", "title": "update model card for gpt-j"}
+{"pr": 40403, "decision": "feature", "reason": "adds customizable logit warping strategies for generation", "title": "Customizable Logit Warping Strategies for Generation #40010"}
+{"pr": 40400, "decision": "documentation", "reason": "README wording cleanup", "title": "fixed redundant words in readme.md"}
+{"pr": 40395, "decision": "documentation", "reason": "Korean documentation translation update", "title": "🌐 [i18n-KO] Updated `text_generation.md`"}
+{"pr": 40392, "decision": "defect", "reason": "removes stray debug print from ShieldGemma2 conversion output", "title": "Remove debug print statement from ShieldGemma2 conversion script"}
+{"pr": 40390, "decision": "documentation", "reason": "spelling-only corrections in comments/doc text", "title": "Fix typo: 'lenght' to 'length'"}
+{"pr": 40388, "decision": "feature", "reason": "adds a new Jinja chat-template fromjson filter with tests", "title": "Add fromjson filter to Jinja2 chat templates"}
+{"pr": 40385, "decision": "defect", "reason": "fixes misspelled MM Grounding DINO checkpoint key in conversion skip list", "title": "Fix typo: 'seperate' -> 'separate' in mm_grounding_dino conversion sc…"}
+{"pr": 40358, "decision": "defect", "reason": "fixes MXFP4 MLP shape handling for 2D hidden states in multi-turn generation", "title": "Fix MXFP4 mlp_forward to handle 2D and 3D hidden_states shapes for multi-turn chat"}
+{"pr": 40328, "decision": "feature", "reason": "prototype support for torch.compile with DynamicCache", "title": "[rfc] Prototype to make torch.compile work with DynamicCache"}
+{"pr": 40299, "decision": "feature", "reason": "removes deprecated max_size parameter from multiple object-detection image processors", "title": "Remove deprecated max_size parameter from ConditionalDetr image processors"}
+{"pr": 40286, "decision": "feature", "reason": "adds new MOSS-TTSD and XY-Tokenizer model implementations", "title": "Add MOSS-TTSD with XY-Tokenizer"}
+{"pr":40265,"decision":"other","reason":"tooling-only change enabling additional ruff/pylint rules","title":"Enable PLW and PLE rules"}
+{"pr":40244,"decision":"defect","reason":"fixes AutoModel mapping so EfficientLoFTR keypoint matching model can instantiate","title":"add-loftr-keypoints-to-map"}
+{"pr":40225,"decision":"documentation","reason":"docs-only clarification for decoder_input_ids versus decoder_inputs_embeds","title":"docs: clarify decoder_input_ids vs decoder_inputs_embeds usage (#39542)"}
+{"pr":40221,"decision":"defect","reason":"fixes save_strategy=best best-model tracking and default metric handling","title":"FIX: enable load_best_model_at_end within SaveStrategy.BEST and initialize metric_for_best_model as loss when SaveStrategy.BEST"}
+{"pr":40209,"decision":"feature","reason":"adds a new fast PyTorch image processor for ViViT","title":"Add fast image processor for  ViViT "}
+{"pr":40208,"decision":"defect","reason":"fixes save_only_model with FSDP sharded state dict checkpoints","title":"Save only model sharded sd"}
+{"pr":40180,"decision":"feature","reason":"adds native MXFP4 training infrastructure for GPT-OSS quantization","title":"Enable native mxfp4 training support for GPT-OSS models"}
+{"pr":40177,"decision":"defect","reason":"fixes Qwen2.5-VL generation position IDs performance/behavior by reverting text position IDs","title":"Revert text_positions in Qwen25VL"}
+{"pr":40171,"decision":"other","reason":"model class/API rename refactor for DINOv3 CamelCase naming","title":"Rename to CamelCase"}
+{"pr":40155,"decision":"documentation","reason":"Korean documentation translation for t5 model docs","title":"\ud83c\udf10 [i18n-KO] Translated `t5.md` to Korean"}
+{"pr":40149,"decision":"feature","reason":"adds a fast VitPose image processor implementation and tests","title":"Implemented fast image processor for VitPose"}
+{"pr":40148,"decision":"defect","reason":"fixes NaN probabilities during sampled beam generation","title":"Update utils.py: fix nan"}
+{"pr":40131,"decision":"documentation","reason":"adds missing Arabic documentation translations","title":"add missing Arabic translations"}
+{"pr":40123,"decision":"defect","reason":"lazy import avoids torchao side-effect warnings/import errors","title":"Lazily import torchao Int4WeightOnlyConfig to avoid side effects"}
+{"pr":40115,"decision":"feature","reason":"extends layer_types support to convolution layers","title":"[layer_types] update layer_types with conv"}
+{"pr":40114,"decision":"defect","reason":"fixes Mixtral torch.export failure from data-dependent expert selection","title":"Fix torch.export compatibility for Mixtral MoE models "}
+{"pr":40102,"decision":"documentation","reason":"adds Korean translation for auto_docstring documentation","title":"🌐 [i18n-KO] Translated  to Korean"}
+{"pr":40092,"decision":"feature","reason":"optimizes Llama attention by fusing QKV projections","title":"Optimize LlamaAttention by fusing QKV projections"}
+{"pr":40090,"decision":"defect","reason":"fixes initialization error for int8/uint8 quantized weights","title":"Fix RuntimeError when loading quantized models with int8 weights (#39366)"}
+{"pr":40065,"decision":"defect","reason":"reduces ForCausalLMLoss memory use by delaying float32 upcast after ignore_index filtering","title":"Delay float32 upcast in ForCausalLMLoss after filtering ignore_index"}
+{"pr":40064,"decision":"documentation","reason":"Korean translation of model documentation","title":"🌐 [i18n-KO] Translated `videomae.md` to Korean"}
+{"pr":40061,"decision":"documentation","reason":"Korean translation of model documentation","title":"🌐 [i18n-KO] Translated `vitdet.md` to Korean"}
+{"pr":40059,"decision":"defect","reason":"fixes GPT-2 inefficient GELU default activation implementation","title":"Fix Inefficient GELU implementation in GPT2"}
+{"pr":40058,"decision":"feature","reason":"adds GGUF loading support and tests for Qwen2VL","title":"GGUF Qwen2VL"}
+{"pr":40055,"decision":"feature","reason":"adds automatic W&B logging of Accelerate parallelism configuration","title":"Auto-log parallelism info to wandb.config using HF Accelerate"}
+{"pr":40047,"decision":"documentation","reason":"updates WavLM model documentation card template","title":"Update wavlm.md to match new model card template"}
+{"pr":40023,"decision":"feature","reason":"adds SDPA attention support for OWLViT and OWLv2","title":"Add support for SDPA for OWLViT and OWLv2"}
+{"pr":40022,"decision":"defect","reason":"fixes DogeDecoder dropout TypeError for MoE tuple outputs","title":"fix: resolve dropout type error in DogeDecoder"}
+{"pr":39999,"decision":"defect","reason":"fixes FSDP2+TP cpu_ram_efficient_loading meta device handling","title":"allow TP to work in ND-parallel with fsdp cpu ram efficient loading"}
+{"pr":39997,"decision":"defect","reason":"fixes GPT-OSS causal mask creation to use provided position_ids for packed inputs","title":"make sure position_ids are passed in for causal mask creation for gpt-oss"}
+{"pr":39987,"decision":"feature","reason":"adds new VGGT model support","title":"Add a VGGT(Visual Geometry Grounded Transformer) model compatible with huggingface transfromers"}
+{"pr":39962,"decision":"defect","reason":"fixes Gemma3 and related multimodal models for torch export by replacing runtime tests with torch._check","title":"Use torch._check instead of a test to make the model Gemma3 exportable"}
+{"pr":39941,"decision":"defect","reason":"fixes image_utils TODO behavior with tests","title":"fixing image_utils.py todo"}
+{"pr":39931,"decision":"feature","reason":"adds StaticCache pytree serialization registration for torch.export","title":"Registers StaticCache serialization functions for torch.export.export"}
+{"pr":39922,"decision":"documentation","reason":"Korean documentation translation","title":"\ud83c\udf10 [i18n-KO] Translated `attention_interface.md` to Korean"}
+{"pr":39920,"decision":"documentation","reason":"Korean documentation update","title":"\ud83c\udf10 [i18n-KO] Updated ko/perf_train_special.md"}
+{"pr":39917,"decision":"documentation","reason":"Korean documentation update","title":"\ud83c\udf10 [i18n-KO] Updated ko/perf_train_cpu.md"}
+{"pr":39901,"decision":"documentation","reason":"Korean documentation translation","title":"\ud83c\udf10 [i18n-KO] Translated `fp_quant` to Korean"}
+{"pr":39899,"decision":"feature","reason":"adds MiniCPM-V 4.0 model support","title":"[model] Support MiniCPM-V 4.0"}
+{"pr":39895,"decision":"feature","reason":"adds new VideoPrism model support","title":"Add Videoprism"}
+{"pr":39886,"decision":"documentation","reason":"Korean documentation translation","title":"🌐 [i18n-KO] Translated `perf_train_gaudi.md` to Korean"}
+{"pr":39866,"decision":"defect","reason":"fixes distributed save_pretrained race by passing trainer is_main_process","title":"make sure model.save_pretrained has the correct is_main_process"}
+{"pr":39859,"decision":"feature","reason":"adds BitsAndBytesConfig target_parameters support for quantizing nn.Parameter weights","title":"WIP: Initial support for bnb 4bit on any nn.Parameter"}
+{"pr":39831,"decision":"other","reason":"internal refactor/readability change rather than defect fix or user-facing feature","title":"refactor(modeling_llama): make RotaryEmbedding default path explicit"}
+{"pr":39807,"decision":"documentation","reason":"Korean documentation translation","title":"🌐 [i18n-KO] Translated `bamba.md` to Korean"}
+{"pr":39796,"decision":"feature","reason":"standardizes and expands text-to-audio pipeline behavior and model support","title":"[pipelines] text-to-audio pipeline standardization"}
+{"pr":39794,"decision":"defect","reason":"fixes ProphetNet forward handling when encoder_outputs is a tuple","title":"Fix ProphetNet forward to handle tuple encoder_outputs"}
+{"pr":39793,"decision":"defect","reason":"fixes DAC checkpoint conversion/model weight norm handling and tests","title":"Fix DAC conversion script"}
+{"pr":39792,"decision":"defect","reason":"fixes transformers serve handling of nested chat message content","title":"Served models handle with nested content"}
+{"pr":39785,"decision":"defect","reason":"fixes mllama integration tests by returning encoder intermediate states","title":"fix mllama integration tests"}
+{"pr":39772,"decision":"defect","reason":"fixes missing parameter initializations across older model implementations","title":"Fix missing initializations for models created in 2022"}
+{"pr":39760,"decision":"feature","reason":"adds the new Llasa TTS model family, docs, conversion and tests","title":"[Draft] Add Llasa TTS family of models"}
+{"pr":39756,"decision":"defect","reason":"fixes Qwen2.5-VL rope_deltas corruption during classifier-free-guidance generation","title":"Fix rope_deltas corruption in Qwen2.5VL during CFG generation"}
+{"pr":39751,"decision":"documentation","reason":"Korean translation documentation-only change","title":"\ud83c\udf10 [i18n-KO] Translated `text-to-speech.md` to Korean"}
+{"pr":39741,"decision":"defect","reason":"fixes HfArgumentParser Union handling so dict alternatives are filtered out","title":"Fix HfArgumentParser to filter out dict types from Union"}
+{"pr":39735,"decision":"defect","reason":"fixes tensor parallel plan lookup for multimodal models using text_config","title":"handle multimodal models with tp_plan on the text_config"}
+{"pr":39722,"decision":"feature","reason":"adds the new Intern-S1 model family with processing, tokenization, docs and tests","title":"[Feat] Adding Intern-S1"}
+{"pr":39718,"decision":"documentation","reason":"documentation-only SigLIP2 model/processor correction","title":"Fix SigLIP2 documentation model/processor mismatch"}
+{"pr":39708,"decision":"documentation","reason":"adds Bengali documentation and i18n README entries","title":"\ud83c\udf10[i18n-bn] Introduce Bengali version of Transformers documentation"}
+{"pr":39698,"decision":"defect","reason":"fixes exaone4 layer type calculation for missing or malformed sliding_window_pattern","title":"Fix exaone4 layer_types ZeroDivision/TypeError when sliding_window_pattern is None/\"LLLG\""}
+{"pr":39697,"decision":"defect","reason":"fixes dtensor storage deprecation by switching to untyped_storage","title":"use untyped storage for dtensors due to deprecation"}
+{"pr":39690,"decision":"feature","reason":"adds support for supplying a custom hf_quantizer in from_pretrained","title":"Allow custom hf_quantizer in from_pretrained"}
+{"pr":39683,"decision":"defect","reason":"fixes generation to respect accelerate config disabling torch.compile/dynamo","title":"Fix issue #39191 respect accelerate config to disable torch.dynamo compilation"}
+{"pr":39675,"decision":"defect","reason":"fixes deepspeed argument handling for dicts and config-file paths","title":"[BugFix]: Support dict and config file path for deepspeed"}
+{"pr":39674,"decision":"defect","reason":"fixes loss scaling/token aggregation to use data parallel group only","title":"Fix loss scaling and token aggregation to use only data parallel group"}
+{"pr":39632,"decision":"documentation","reason":"updates a dead NVIDIA reference link in a model docstring/comment","title":"fix dead NVIDIA link "}
+{"pr":39631,"decision":"feature","reason":"adds speech-to-text support to the serving command","title":"[serve] Add speech-to-text"}
+{"pr":39625,"decision":"defect","reason":"fixes HfArgumentParser support for Union[str, dict, None] fields","title":"Fix: allow Union[str, dict, None] fields like deepspeed to be passed via CLI"}
+{"pr":39617,"decision":"defect","reason":"fixes Trainer FSDP v1 save path to use the wrapped model correctly","title":"Fix FSDP v1 bug: trainer incorrectly uses an unwrapped model"}
+{"pr":39599,"decision":"defect","reason":"fixes Trainer resume to check TrainerState file exists before loading","title":"Fix: check TrainerState file exists before loading during resume"}
+{"pr":39588,"decision":"feature","reason":"adds a new reference VLM model implementation","title":"WIP, reference modeling"}
+{"pr":39575,"decision":"documentation","reason":"adds Korean translation for the VitPose documentation","title":"\ud83c\udf10 [i18n-KO] Translated `vitpose.md` to Korean"}
+{"pr":39563,"decision":"documentation","reason":"adds Korean translation for the Vision Encoder Decoder documentation","title":"\ud83c\udf10 [i18n-KO] Translated `vision-encoder-decoder.md` to Korean"}
+{"pr":39560,"decision":"defect","reason":"fixes load_best_model_at_end when save_steps is less frequent than eval_steps","title":"fix load_model_end = true work when save_steps < eval_steps"}
+{"pr":39559,"decision":"documentation","reason":"adds Korean translation for DeepSpeed documentation","title":"\ud83c\udf10 [i18n-KO] Translated `main_classes/deepspeed.md` to Korean"}
+{"pr":39555,"decision":"feature","reason":"changes tie_weights behavior to relax automatic input/output embedding tying","title":"[WIP]\u00a0try to relax the tie_weights method"}
+{"pr":39544,"decision":"documentation","reason":"adds Korean translation for feature extractor documentation","title":"\ud83c\udf10 [i18n-KO] Translated feature_extractors.md to Korea"}
+{"pr":39541,"decision":"feature","reason":"adds Muon optimizer support and Trainer integration","title":"Add Muon optimizer implementation and integration"}
+{"pr":39534,"decision":"feature","reason":"adds a new BEiT3 model implementation and tests","title":"Add Beit3 model"}
+{"pr":39517,"decision":"documentation","reason":"adds Korean translation for compressed tensors quantization documentation","title":"\ud83c\udf10 [i18n-KO] Translated `compressed_tensor.md`  to Korean"}
+{"pr":39493,"decision":"defect","reason":"fixes Voxtral mistral-common dependency pin/extras","title":"[Voxtral] nit + pin correct mistral common version"}
+{"pr":39491,"decision":"defect","reason":"fixes int8 quantized model loading by avoiding missing-key weight initialization","title":"Fix: Skip weight initialization for quantized int8 models"}
+{"pr":39480,"decision":"feature","reason":"adds new arcinstitute state/state-transition models","title":"Add model arcinstitute state"}
+{"pr":39468,"decision":"defect","reason":"fixes quantized model dispatch with automatic device maps","title":"Fix quantized model dispatch with device_map='auto'"}
+{"pr":39466,"decision":"documentation","reason":"updates Bert Japanese model documentation/model card","title":"README: Update Bert Japanese model card"}
+{"pr":39464,"decision":"defect","reason":"fixes quantized loading by skipping initialize_weights for quantized models","title":"Skipping `initialize_weights` when model is quantized"}
+{"pr":39456,"decision":"defect","reason":"fixes int8 quantized model initialization failure","title":"Fix quantized model initialization for int8 dtypes"}
+{"pr":39449,"decision":"defect","reason":"replaces deprecated logger.warn calls in Gemma model files","title":"Fix logger warnings in Gemma model test files"}
+{"pr":39435,"decision":"defect","reason":"adds regression coverage for BartModel eager vs SDPA discrepancy","title":"Add a unit test for BartModel to compare eager, sdpa on one particular set of inputs"}
+{"pr":39403,"decision":"feature","reason":"adds new Vocos and Vocos-EnCodec audio models","title":"Add Vocos model"}
+{"pr":39357,"decision":"documentation","reason":"docstring-only update for GLM4V","title":"Update docstring for glm4v"}
+{"pr":39353,"decision":"defect","reason":"fixes ColPali checkpoint/key mapping for loading","title":"fix colpali mapping"}
+{"pr":39309,"decision":"defect","reason":"fixes audio pipelines when torchcodec AudioDecoder inputs produce torch tensors","title":"Fix audio pipeline with torchcodec input"}
+{"pr":39303,"decision":"documentation","reason":"fixes typos in a documentation code example","title":"Fix critical typos in code example"}
+{"pr":39297,"decision":"defect","reason":"fixes TrainingArguments deepspeed/accelerator_config argument handling","title":"Fix bug with deepspeed  and accelerator args in training_args.py"}
+{"pr":39293,"decision":"feature","reason":"adds the new T5LA model family and docs/tests","title":"Add T5LA models"}
+{"pr":39264,"decision":"defect","reason":"adds clearer timm-version handling for unsupported MobileNetV5 architectures","title":"Fix: Add version check for timm to support mobilenetv5 models (fixes #39208)"}
+{"pr":39257,"decision":"defect","reason":"fixes can_return_tuple by forcing wrapped calls to return ModelOutput before tuple conversion","title":"Fix to tuple conversion with config"}
+{"pr":39251,"decision":"defect","reason":"fixes Moshi greedy fp16 generation test/cache behavior","title":"Fix slow test_moshika_greedy_unconditional_fp16"}
+{"pr":39236,"decision":"feature","reason":"adds a new moment-p sampling logits warper and generation configuration knobs","title":"added moment_p sampling"}
+{"pr":39222,"decision":"feature","reason":"enables GraniteMoeHybrid slow integration tests against the released preview checkpoint","title":"Enable granite 4 hybrid integration tests"}
+{"pr":39212,"decision":"documentation","reason":"adds a Ukrainian README translation","title":"Add Ukrainian translation of README.md"}
+{"pr":39211,"decision":"defect","reason":"attempts to prevent Gemma 3n loading from failing on mobilenetv5_300m_enc unknown architecture","title":"Add mobilenet_v5 stub implementation to fix \"Unknown Model\" error"}
+{"pr":39209,"decision":"other","reason":"refactors FSMT class naming for consistency without a functional user-facing fix","title":"Standardize FSMT class naming: PretrainedFSMTModel → PreTrainedFSMTModel"}
+{"pr":39206,"decision":"defect","reason":"fixes Qwen3 MoE router-logit auxiliary loss crashes when mlp_only_layers produce no router logits","title":"fix: filter None router logits in Qwen3 MoE and handle empty router logits (#39203)"}
+{"pr":39183,"decision":"feature","reason":"adds a new optional dependency extra for chat/conversation usage","title":"Add a 'chat' extra"}
+{"pr":39150,"decision":"feature","reason":"adds a vectorized MoE expert implementation for DeepSeek/Mixtral-style models","title":"Efficient Expert Weight Fusion for Moe deepseek v3"}
+{"pr":39140,"decision":"feature","reason":"adds opt-in emergency checkpoint saving to Trainer on crashes or termination signals","title":"feat(trainer): emergency checkpointing on crashes & SIGTERM/SIGINT"}
+{"pr":39109,"decision":"defect","reason":"tries to fix a TrainingArguments constructor/API mismatch around evaluation strategy naming","title":"Fix: rename 'eval_strategy' to 'evaluation_strategy' in TrainingArgum…"}
+{"pr":39108,"decision":"defect","reason":"disables unsupported fullgraph/static-cache compilation behavior for MoE model classes","title":"Disable static cache on certain MoE models"}
+{"pr":39103,"decision":"defect","reason":"fixes audio-related Gemma3n configuration/model naming mismatch","title":"Fix audio-related config naming for Gemma3n "}
+{"pr":39084,"decision":"feature","reason":"refactors Gemma3n configuration/model/conversion code","title":"Refactor gemma3n"}
+{"pr":39047,"decision":"feature","reason":"refactors causal LM loss API to support passing lm_head weights/hidden states","title":"RFC: refactor causal lm loss to handle lm_head in loss function"}
+{"pr":39046,"decision":"defect","reason":"fixes deprecated max_size handling in DETR-family image processors","title":"Fix deprecated max_size parameter handling in DETR image processors"}
+{"pr":39037,"decision":"defect","reason":"fixes Kosmos2 attention behavior and tests after attention backend changes","title":"fix `kosmos2` tests"}
+{"pr":39012,"decision":"defect","reason":"attempts to fix DeepSeekV3 torch compile training test failure","title":"[WIP] Fix DeepseekV3ModelTest::test_torch_compile_for_training"}
+{"pr":39009,"decision":"feature","reason":"adds common-model-test helper checking submodel support","title":"Add submodels support check function"}
+{"pr":38999,"decision":"defect","reason":"fixes unintended GroundingDINO bbox_embed parameter sharing with deep copies","title":"Use deep copies instead of shallow copies for bbox_embed in GroundingDINO decoder (#37333)."}
+{"pr":38991,"decision":"feature","reason":"broad API/model refactor removing return_dict kwargs from model calls","title":"Remove `return_dict` kwarg from all the models"}
+{"pr":38988,"decision":"defect","reason":"fixes checker gap where modular-file docstrings were not validated, causing regenerated docstring drift","title":"Check docstring inside modular files as well"}
+{"pr":38962,"decision":"other","reason":"test-only duplicate import/no substantive defect or feature","title":"Update test_candidate_generator.py"}
+{"pr":38959,"decision":"documentation","reason":"model card documentation update only","title":"Updated the model card for wav2vec2-phoneme"}
+{"pr":38958,"decision":"documentation","reason":"model card documentation update only","title":"Updated model card for wav2vec2-conformer"}
+{"pr":38957,"decision":"documentation","reason":"model card documentation update only","title":"Update wav2vec2-bert model card"}
+{"pr":38956,"decision":"documentation","reason":"model card documentation update only","title":"Updating model card for wav2vec2"}
+{"pr":38955,"decision":"documentation","reason":"model card documentation update only","title":"docs: Musicgen melody model card"}
+{"pr":38926,"decision":"documentation","reason":"installation documentation clarification only","title":"Clarify Python and framework version support in installation.md"}
+{"pr":38923,"decision":"feature","reason":"API cleanup removing deprecated YOLOS max_size support","title":"Remove deprecated max_size support from YOLOS image processor"}
+{"pr":38908,"decision":"defect","reason":"fixes HybridChunkedCache dtype selection to honor config torch_dtype","title":"Add support to use config dtype in HybridChunkedCache"}
+{"pr":38893,"decision":"defect","reason":"fixes/deprecates obsolete max_size handling in Conditional DETR image processors","title":"Fix/deprecate max size conditional detr"}
+{"pr":38888,"decision":"defect","reason":"fixes deprecated Accelerator distributed_type TPU checks to use XLA in examples","title":"continue to fix distributed_type from TPU to XLA in LM examples (#38652)"}
+{"pr":38886,"decision":"feature","reason":"adds bitsandbytes quantizer compile support for generation","title":"Allow compile with bnb"}
+{"pr":38884,"decision":"defect","reason":"fixes Llama 4 MoE conversion handling for moe_args presence","title":"Llama 4 conversion fix for moe models"}
+{"pr":38877,"decision":"documentation","reason":"docstring/documentation clarification for attention_mask plus generated docs/style updates","title":"DOC: Clarify attention_mask usage in BertModel forward method"}
+{"pr":38861,"decision":"feature","reason":"adds a SAM fast image processor and tests","title":"Add SamImageProcessorFast with 4x performance improvement"}
+{"pr":38859,"decision":"feature","reason":"adds a MobileViT fast image processor and tests","title":"Add MobileViT fast image processor"}
+{"pr":38839,"decision":"other","reason":"explicit do-not-merge dependency test for safetensors version bump","title":"[DO NOT MERGE] Testing saftensors 0.6.0"}
+{"pr":38810,"decision":"feature","reason":"adds kwargs support for Whisper conditional generation loss customization","title":"Add kwargs support in WhisperForConditionalGeneration"}
+{"pr":38805,"decision":"feature","reason":"adds new Dust3R model, processors, docs, and tests","title":"Add Dust3R"}
+{"pr":38793,"decision":"documentation","reason":"comment-only typo fixes without functional code changes","title":"Fix Typos in Comments and Improve Clarity"}
+{"pr":38786,"decision":"documentation","reason":"documentation-only clarification for MADLAD-400 target language tokens","title":"Provide clearer instructions on how to specify target language."}
