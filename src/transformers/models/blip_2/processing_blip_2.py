@@ -77,7 +77,7 @@ class Blip2Processor(ProcessorMixin):
         return_tensors = output_kwargs["text_kwargs"].pop("return_tensors", None)
         max_length = output_kwargs["text_kwargs"].pop("max_length", None)
         if max_length is not None:
-            output_kwargs["text_kwargs"]["max_length"] = max_length - self.num_query_tokens
+            output_kwargs["text_kwargs"]["max_length"] = max_length - (self.num_query_tokens or 0)
 
         encoding = BatchFeature(tensor_type=return_tensors)
         if text is not None:
