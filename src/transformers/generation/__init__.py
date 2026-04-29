@@ -77,6 +77,7 @@ else:
         "WatermarkLogitsProcessor",
     ]
     _import_structure["stopping_criteria"] = [
+        "AsyncStoppingCriteriaList",
         "MaxLengthCriteria",
         "MaxTimeCriteria",
         "ConfidenceCriteria",
@@ -175,6 +176,7 @@ if TYPE_CHECKING:
             WhisperTimeStampLogitsProcessor,
         )
         from .stopping_criteria import (
+            AsyncStoppingCriteriaList,
             ConfidenceCriteria,
             EosTokenCriteria,
             MaxLengthCriteria,
