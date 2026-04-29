@@ -22,12 +22,14 @@ Processor class for Qwen2-VL.
 
 from ...processing_utils import MultiModalData, ProcessingKwargs, ProcessorMixin
 from ...utils import auto_docstring, logging
+from .image_processing_qwen2_vl import Qwen2VLImageProcessorKwargs
 
 
 logger = logging.get_logger(__name__)
 
 
 class Qwen2VLProcessorKwargs(ProcessingKwargs, total=False):
+    images_kwargs: Qwen2VLImageProcessorKwargs
     _defaults = {
         "text_kwargs": {
             "padding": False,

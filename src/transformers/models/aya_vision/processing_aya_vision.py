@@ -15,9 +15,11 @@
 
 from ...processing_utils import BatchFeature, MultiModalData, ProcessingKwargs, ProcessorMixin
 from ...utils import auto_docstring
+from ..got_ocr2.image_processing_got_ocr2 import GotOcr2ImageProcessorKwargs
 
 
 class AyaVisionProcessorKwargs(ProcessingKwargs, total=False):
+    images_kwargs: GotOcr2ImageProcessorKwargs
     _defaults = {
         "text_kwargs": {
             "padding_side": "left",

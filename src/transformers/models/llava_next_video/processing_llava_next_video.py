@@ -21,12 +21,14 @@ from ...image_processing_utils import select_best_resolution
 from ...image_utils import get_image_size, to_numpy_array
 from ...processing_utils import MultiModalData, ProcessingKwargs, ProcessorMixin
 from ...utils import auto_docstring, logging
+from ..llava_next.image_processing_llava_next import LlavaNextImageProcessorKwargs
 
 
 logger = logging.get_logger(__name__)
 
 
 class LlavaNextVideoProcessorKwargs(ProcessingKwargs, total=False):
+    images_kwargs: LlavaNextImageProcessorKwargs
     # see processing_utils.ProcessingKwargs documentation for usage.
     _defaults = {
         "text_kwargs": {

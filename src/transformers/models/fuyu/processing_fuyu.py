@@ -33,7 +33,7 @@ from ...utils.import_utils import requires
 
 
 if is_torch_available():
-    from .image_processing_fuyu import FuyuBatchFeature
+    from .image_processing_fuyu import FuyuBatchFeature, FuyuImagesKwargs
 
 
 logger = logging.get_logger(__name__)
@@ -56,6 +56,7 @@ BEGINNING_OF_ANSWER_STRING = "<0x04>"  # <boa>
 
 
 class FuyuProcessorKwargs(ProcessingKwargs, total=False):
+    images_kwargs: FuyuImagesKwargs
     _defaults = {
         "text_kwargs": {
             "add_special_tokens": True,

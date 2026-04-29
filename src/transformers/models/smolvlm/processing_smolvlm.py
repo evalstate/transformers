@@ -24,6 +24,7 @@ from ...processing_utils import ProcessingKwargs, ProcessorMixin, Unpack
 from ...tokenization_utils_base import BatchEncoding, TextInput
 from ...utils import auto_docstring, is_num2words_available, logging
 from ...video_utils import VideoInput
+from .image_processing_smolvlm import SmolVLMImageProcessorKwargs
 
 
 # Adapted from transformers.models.smolvlm.video_processing_smolvlm.DEFAULT_VIDEO_INTRO
@@ -98,6 +99,7 @@ def get_image_prompt_string(
 
 
 class SmolVLMProcessorKwargs(ProcessingKwargs, total=False):
+    images_kwargs: SmolVLMImageProcessorKwargs
     _defaults = {
         "text_kwargs": {
             "add_special_tokens": True,

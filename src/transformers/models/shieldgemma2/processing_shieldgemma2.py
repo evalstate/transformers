@@ -18,6 +18,7 @@ from ...feature_extraction_utils import BatchFeature
 from ...image_utils import ImageInput
 from ...processing_utils import Unpack
 from ...utils import logging
+from ..gemma3.image_processing_gemma3 import Gemma3ImageProcessorKwargs
 from ..gemma3.processing_gemma3 import Gemma3Processor, Gemma3ProcessorKwargs
 
 
@@ -45,6 +46,7 @@ DEFAULT_SHIELDGEMMA2_POLICIES: Mapping[str, str] = {
 
 
 class ShieldGemma2ProcessorKwargs(Gemma3ProcessorKwargs, total=False):
+    images_kwargs: Gemma3ImageProcessorKwargs
     policies: Sequence[str] | None
     custom_policies: Mapping[str, str] | None
     _defaults = {
