@@ -175,6 +175,9 @@ class HfArgumentParser(ArgumentParser):
                     " the argument parser only supports one type per argument."
                     f" Problem encountered in field '{field.name}'."
                 )
+            # filter `dict` in Union because argparse does not support it
+            if dict in field.type.__args__:
+                field.type = Union[tuple(arg for arg in field.type.__args__ if arg is not dict)]
             if type(None) not in field.type.__args__:
                 if len(field.type.__args__) > 2:
                     origin_type = str
