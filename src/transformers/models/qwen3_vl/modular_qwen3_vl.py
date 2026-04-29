@@ -641,6 +641,7 @@ class Qwen3VLTextModel(Qwen3VLPreTrainedModel, Qwen3Model):
         past_key_values: Cache | None = None,
         inputs_embeds: torch.FloatTensor | None = None,
         use_cache: bool | None = None,
+        cache_position: torch.LongTensor | None = None,
         # args for deepstack
         visual_pos_masks: torch.Tensor | None = None,
         deepstack_visual_embeds: list[torch.Tensor] | None = None,
@@ -657,6 +658,9 @@ class Qwen3VLTextModel(Qwen3VLPreTrainedModel, Qwen3Model):
         if (input_ids is None) ^ (inputs_embeds is not None):
             raise ValueError("You must specify exactly one of input_ids or inputs_embeds")
 
+        if use_cache is None:
+            use_cache = self.config.use_cache
+
         # torch.jit.trace() doesn't support cache objects in the output
         if use_cache and past_key_values is None and not torch.jit.is_tracing():
             past_key_values = DynamicCache(config=self.config)
@@ -664,11 +668,15 @@ class Qwen3VLTextModel(Qwen3VLPreTrainedModel, Qwen3Model):
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids)
 
+        if cache_position is None:
+            past_seen_tokens = past_key_values.get_seq_length() if past_key_values is not None else 0
+            cache_position = torch.arange(
+                past_seen_tokens, past_seen_tokens + inputs_embeds.shape[1], device=inputs_embeds.device
+            )
+
         # the hard coded `4` is for text, temporal, height and width.
         if position_ids is None:
-            past_seen_tokens = past_key_values.get_seq_length() if past_key_values is not None else 0
-            position_ids = torch.arange(inputs_embeds.shape[1], device=inputs_embeds.device) + past_seen_tokens
-            position_ids = position_ids.view(1, 1, -1).expand(4, inputs_embeds.shape[0], -1)
+            position_ids = cache_position.view(1, 1, -1).expand(4, inputs_embeds.shape[0], -1)
         elif position_ids.ndim == 2:
             position_ids = position_ids[None, ...].expand(4, position_ids.shape[0], -1)
 
@@ -698,6 +706,8 @@ class Qwen3VLTextModel(Qwen3VLPreTrainedModel, Qwen3Model):
                 attention_mask=attention_mask,
                 position_ids=text_position_ids,
                 past_key_values=past_key_values,
+                use_cache=use_cache,
+                cache_position=cache_position,
                 position_embeddings=position_embeddings,
                 **kwargs,
             )
