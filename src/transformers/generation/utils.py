@@ -2173,6 +2173,9 @@ class GenerationMixin(ContinuousMixin):
         if generation_config.disable_compile:
             return False
 
+        if os.getenv("TORCHDYNAMO_DISABLE", "").lower() in ("1", "true", "yes", "on"):
+            return False
+
         cache = model_kwargs.get("past_key_values", model_kwargs.get("cache_params"))
 
         # Base logic
