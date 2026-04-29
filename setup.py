@@ -93,7 +93,7 @@ _deps = [
     "kenlm",
     "kernels>=0.12.0,<0.13",
     "librosa",
-    "mistral-common[image]>=1.10.0",
+    "mistral-common[image,audio]>=1.10.0",
     "nltk<=3.8.1",
     "num2words",
     "numpy>=1.17",
@@ -193,7 +193,7 @@ extras["docs"] = deps_list("hf-doc-builder")
 extras["kernels"] = deps_list("kernels")
 extras["sentencepiece"] = deps_list("sentencepiece", "protobuf")
 extras["tiktoken"] = deps_list("tiktoken", "blobfile")
-extras["mistral-common"] = deps_list("mistral-common[image]")
+extras["mistral-common"] = deps_list("mistral-common[image,audio]")
 extras["chat_template"] = deps_list("jinja2", "jmespath")
 extras["sklearn"] = deps_list("scikit-learn")
 extras["accelerate"] = deps_list("accelerate")
