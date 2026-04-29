@@ -1401,6 +1401,10 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
             if ignore_missing := getattr(module, "_keys_to_ignore_on_load_missing", None):
                 self._keys_to_ignore_on_load_missing.extend([f"{name}.{child_name}" for child_name in ignore_missing])
 
+        # Preserve the current no-tie scope on this instance so only the model
+        # being initialized in that scope skips tie_weights().
+        self._skip_tie_weights_scope = init._SKIP_TIE_WEIGHTS_SCOPE.get()
+
         # Maybe initialize the weights and tie the keys
         self.init_weights()
         self._backward_compatibility_gradient_checkpointing()
@@ -2613,6 +2617,9 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         `source` is missing in the checkpoint while `target` exists, we *swap* source and target so we can still
         tie everything to the parameter that actually exists.
         """
+        if init.should_skip_tie_weights(self):
+            return
+
         # In this case, the keys stored in `all_tied_weights_keys` are already correct
         if not recompute_mapping:
             tied_keys = self.all_tied_weights_keys
