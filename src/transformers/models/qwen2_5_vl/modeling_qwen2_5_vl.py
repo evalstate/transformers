@@ -336,6 +336,10 @@ class Qwen2_5_VLPreTrainedModel(PreTrainedModel):
     _supports_attention_backend = True
 
     def _init_weights(self, module):
+        weight = getattr(module, "weight", None)
+        if weight is not None and not weight.is_floating_point():
+            return
+
         super()._init_weights(module)
         if isinstance(module, Qwen2_5_VisionRotaryEmbedding):
             inv_freq = 1.0 / (module.theta ** (torch.arange(0, module.dim, 2, dtype=torch.float) / module.dim))
