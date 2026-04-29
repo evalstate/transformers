@@ -301,6 +301,7 @@ class DeepseekV3DecoderLayer(LlamaDecoderLayer):
 
 
 class DeepseekV3PreTrainedModel(LlamaPreTrainedModel):
+    _can_compile_fullgraph = False
     _keep_in_fp32_modules_strict = ["e_score_correction_bias"]
     # MTP weights live at `model.layers.{num_hidden_layers + k}.*`. They are loaded
     # separately through `MTPCandidateGenerator` (see `transformers.generation.candidate_generators`)
