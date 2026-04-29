@@ -517,7 +517,7 @@ def _is_packed_sequence(position_ids, batch_size):
         2. Flattened sequences only are supported
         3. Compile-friendly `not (torch.diff(position_ids, dim=-1) >= 0).all()`, i.e. we have multiple increasing sequences
     """
-    if position_ids is None:
+    if is_tracing(position_ids) or position_ids is None:
         return False
 
     increasing_position_sequences = (
