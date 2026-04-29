@@ -539,6 +539,7 @@ CONFIG_MAPPING_NAMES = OrderedDict(
         ("sam_hq", "SamHQConfig"),
         ("sam_hq_vision_model", "SamHQVisionConfig"),
         ("sam_vision_model", "SamVisionConfig"),
+        ("sarvam_mla", "SarvamMLAConfig"),
         ("seamless_m4t", "SeamlessM4TConfig"),
         ("seamless_m4t_v2", "SeamlessM4Tv2Config"),
         ("seed_oss", "SeedOssConfig"),
