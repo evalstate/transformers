@@ -872,13 +872,6 @@ class Trainer:
             raise ValueError(
                 "`auto_find_batch_size` isn't supported yet with DeepSpeed Zero-3. Please consider using Zero-2, Zero-1, or FSDP"
             )
-        if (
-            self.args.save_only_model
-            and self.is_fsdp_enabled
-            and "SHARDED_STATE_DICT" in str(self.accelerator.state.fsdp_plugin.state_dict_type)
-        ):
-            raise ValueError("save_only_model option is not compatible with FSDP state dict type 'SHARDED_STATE_DICT'")
-
     # ---- Data Loading ----
 
     def get_train_dataloader(self) -> DataLoader:
