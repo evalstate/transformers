@@ -2920,9 +2920,13 @@ class Trainer:
 
         # Will be useful when we have an iterable dataset so don't know its length.
         observed_num_examples = 0
+        max_eval_batches = args.max_eval_batches
 
         # Main evaluation loop
         for step, inputs in enumerate(dataloader):
+            if max_eval_batches is not None and step >= max_eval_batches:
+                break
+
             # Update the observed num examples
             observed_batch_size = find_batch_size(inputs)
             if observed_batch_size is not None:
@@ -2977,7 +2981,9 @@ class Trainer:
 
             if self.args.batch_eval_metrics:
                 if self.compute_metrics is not None and logits is not None and labels is not None:
-                    is_last_step = self.accelerator.gradient_state.end_of_dataloader
+                    is_last_step = self.accelerator.gradient_state.end_of_dataloader or (
+                        max_eval_batches is not None and step + 1 >= max_eval_batches
+                    )
                     batch_kwargs = {}
                     batch_kwargs["losses"] = losses if "loss" in args.include_for_metrics else None
                     batch_kwargs["inputs"] = inputs if "inputs" in args.include_for_metrics else None
@@ -3009,7 +3015,9 @@ class Trainer:
         all_inputs = all_inputs.get_arrays()
 
         # Number of samples
-        if has_length(eval_dataset):
+        if max_eval_batches is not None:
+            num_samples = observed_num_examples
+        elif has_length(eval_dataset):
             num_samples = len(eval_dataset)
         # The instance check is weird and does not actually check for the type, but whether the dataset has the right
         # methods. Therefore we need to make sure it also has the attribute.

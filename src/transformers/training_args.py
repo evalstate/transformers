@@ -444,6 +444,8 @@ class TrainingArguments:
             Number of predictions steps to accumulate the output tensors for, before moving the results to the CPU. If
             left unset, the whole predictions are accumulated on the device accelerator before being moved to the CPU (faster but
             requires more memory).
+        max_eval_batches (`int`, *optional*):
+            Maximum number of batches to run during evaluation. If unset, all evaluation batches are used.
 
         > Metrics Computation
 
@@ -1119,6 +1121,10 @@ class TrainingArguments:
         metadata={
             "help": "Number of predictions steps to accumulate the output tensors for, before moving the results to the CPU. If unset, predictions are accumulated on the accelerator before being moved to the CPU."
         },
+    )
+    max_eval_batches: int | None = field(
+        default=None,
+        metadata={"help": "Maximum number of batches to run during evaluation. If unset, all batches are used."},
     )
 
     # --- Metrics ---
