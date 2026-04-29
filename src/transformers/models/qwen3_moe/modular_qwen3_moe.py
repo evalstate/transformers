@@ -31,7 +31,9 @@ from ..mixtral.modeling_mixtral import (
     MixtralForCausalLM,
     MixtralModel,
     MixtralPreTrainedModel,
-    load_balancing_loss_func,
+)
+from ..mixtral.modeling_mixtral import (
+    load_balancing_loss_func as mixtral_load_balancing_loss_func,
 )
 from ..qwen2_moe.modeling_qwen2_moe import Qwen2MoeDecoderLayer, Qwen2MoeExperts, Qwen2MoeMLP, Qwen2MoeTopKRouter
 from ..qwen3.modeling_qwen3 import Qwen3Attention
@@ -39,6 +41,17 @@ from .configuration_qwen3_moe import Qwen3MoeConfig
 
 
 logger = logging.get_logger(__name__)
+
+
+def load_balancing_loss_func(
+    gate_logits: torch.Tensor | tuple[torch.Tensor] | None,
+    num_experts: int | None = None,
+    top_k=2,
+    attention_mask: torch.Tensor | None = None,
+) -> torch.Tensor | int:
+    if isinstance(gate_logits, tuple) and len(gate_logits) == 0:
+        return 0
+    return mixtral_load_balancing_loss_func(gate_logits, num_experts, top_k, attention_mask)
 
 
 class Qwen3MoeAttention(Qwen3Attention):  # This is the main diff with qwen2Moe!

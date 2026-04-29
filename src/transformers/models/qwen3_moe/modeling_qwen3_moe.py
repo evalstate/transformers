@@ -553,7 +553,7 @@ def load_balancing_loss_func(
     Returns:
         The auxiliary loss.
     """
-    if gate_logits is None or not isinstance(gate_logits, tuple):
+    if gate_logits is None or not isinstance(gate_logits, tuple) or len(gate_logits) == 0:
         return 0
 
     if isinstance(gate_logits, tuple):
