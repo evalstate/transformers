@@ -282,3 +282,20 @@ Training with the previously defined hyper-parameters yields the following resul
 ```bash
 acc = 0.7093812375249501
 ```
+
+---
+
+## Multi-label text classification
+
+The script [`run_multilabel_classification.py`](./run_multilabel_classification.py) demonstrates a multi-label text classifier using `BCEWithLogitsLoss` via `problem_type="multi_label_classification"`. It reports F1 (micro/macro), Hamming loss, and subset accuracy, and can tune the decision threshold on the validation set.
+
+```bash
+python run_multilabel_classification.py \
+  --model_name_or_path distilbert-base-uncased \
+  --dataset_name go_emotions \
+  --text_column text \
+  --label_columns admiration,amusement,anger \
+  --do_train \
+  --do_eval \
+  --output_dir /tmp/multilabel
+```
