@@ -2300,6 +2300,13 @@ class Trainer:
         if self.control.should_evaluate:
             metrics = self._evaluate(trial, ignore_keys_for_eval)
             is_new_best_metric = self._determine_best_metric(metrics=metrics, trial=trial)
+            if (
+                is_new_best_metric
+                and self.args.load_best_model_at_end
+                and self.args.save_strategy != SaveStrategy.BEST
+                and not self.control.should_save
+            ):
+                self._save_checkpoint(model, trial)
 
             if self.args.save_strategy == SaveStrategy.BEST:
                 self.control.should_save = is_new_best_metric
