@@ -357,7 +357,7 @@ class Gemma3nVisionConfig(TimmWrapperConfig):
 @strict
 class Gemma3nConfig(PreTrainedConfig):
     r"""
-    audio_soft_tokens_per_image (`int`, *optional*, defaults to 188):
+    audio_soft_tokens_per_audio (`int`, *optional*, defaults to 188):
         The number of soft tokens per audio clip.
     vision_soft_tokens_per_image (`int`, *optional*, defaults to 256):
         The number of soft tokens per image.
@@ -404,7 +404,7 @@ class Gemma3nConfig(PreTrainedConfig):
     text_config: Gemma3nTextConfig | dict[str, Any] | None = None
     vision_config: Gemma3nVisionConfig | dict[str, Any] | None = None
     audio_config: Gemma3nAudioConfig | dict[str, Any] | None = None
-    audio_soft_tokens_per_image: int | None = 188
+    audio_soft_tokens_per_audio: int | None = 188
     vision_soft_tokens_per_image: int | None = 256
     boi_token_id: int | None = 255_999
     eoi_token_id: int | None = 262_144
@@ -1764,7 +1764,7 @@ class Gemma3nAudioEncoder(Gemma3nPreTrainedModel):
 
         Returns:
             audio_encodings: a torch.Tensor of shape
-                `[batch_size, self.config.audio_soft_tokens_per_image,
+                `[batch_size, self.config.audio_soft_tokens_per_audio,
                 self.config.audio_config.hidden_size]`
             audio_mel_mask: a torch.BoolTensor of shape [batch, num_frames].
         """
@@ -2272,7 +2272,7 @@ class Gemma3nModel(PaliGemmaModel):
             audio_features = torch.where(audio_mask.unsqueeze(-1), audio_padding_embs, audio_features)
 
             audio_batch_size, audio_seq_len, audio_embed_dim = audio_features.shape
-            extra_padding_tokens = self.config.audio_soft_tokens_per_image - audio_seq_len
+            extra_padding_tokens = self.config.audio_soft_tokens_per_audio - audio_seq_len
             extra_padding_features = audio_padding_embs.expand(audio_batch_size, extra_padding_tokens, audio_embed_dim)
 
             audio_features = torch.cat((audio_features, extra_padding_features), dim=1)
