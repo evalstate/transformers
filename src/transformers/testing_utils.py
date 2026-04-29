@@ -3204,17 +3204,13 @@ def get_device_properties() -> DeviceProperties:
     """
     Get environment device properties.
     """
-    if IS_CUDA_SYSTEM or IS_ROCM_SYSTEM:
-        import torch
-
+    if (IS_CUDA_SYSTEM or IS_ROCM_SYSTEM) and torch.cuda.is_available():
         major, minor = torch.cuda.get_device_capability()
         if IS_ROCM_SYSTEM:
             return ("rocm", major, minor)
         else:
             return ("cuda", major, minor)
     elif IS_XPU_SYSTEM:
-        import torch
-
         # To get more info of the architecture meaning and bit allocation, refer to https://github.com/intel/llvm/blob/sycl/sycl/include/sycl/ext/oneapi/experimental/device_architecture.def
         arch = torch.xpu.get_device_capability()["architecture"]
         gen_mask = 0x000000FF00000000
