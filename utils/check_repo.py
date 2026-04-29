@@ -290,6 +290,7 @@ IGNORE_NON_TESTED = (
         "Sam3LiteTextTextModel",  # Building part of a bigger model, tested implicitly through Sam3LiteTextModel
         "Granite4VisionTextModel",  # Building part of bigger (tested) model. Tested implicitly through Granite4VisionModel.
         "Exaone4_5_VisionModel",  # Building part of a bigger model
+        "Qwen3ASRForForcedAlignment",  # Base model tested via Qwen3ASRForConditionalGeneration, and outputs via integration tests
     ]
 )
 
