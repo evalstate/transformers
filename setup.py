@@ -209,6 +209,7 @@ extras["codecarbon"] = deps_list("codecarbon")
 extras["serving"] = (
     deps_list("openai", "pydantic", "uvicorn", "fastapi", "starlette", "rich", "requests") + extras["torch"]
 )
+extras["chat"] = deps_list("rich", "requests")
 extras["num2words"] = deps_list("num2words")
 extras["benchmark"] = deps_list("optimum-benchmark")
 extras["ja"] = deps_list("fugashi", "ipadic", "unidic_lite", "unidic", "rhoknp")
