@@ -13,6 +13,7 @@
 # limitations under the License.
 """PyTorch PaliGemmamodel."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import torch
@@ -99,6 +100,117 @@ class PaliGemmaMultiModalProjector(nn.Module):
         return hidden_states
 
 
+def token_type_ids_mask_function(
+    token_type_ids: torch.Tensor | None,
+    image_group_ids: torch.Tensor | None,
+) -> Callable | None:
+    """
+    This function adds the correct offsets to the `q_idx` and `kv_idx` as the torch API can only accept lengths,
+    not start and end indices.
+    """
+    # Do not return an additional mask in this case
+    if token_type_ids is None:
+        return None
+
+    def inner_mask(batch_idx: int, head_idx: int, q_idx: int, kv_idx: int) -> bool:
+        # If it's 1 for both query and key/value, we are in an image block
+        # NOTE: static cache shape goes beyond input seq length, while token_type_ids.shape[1] == input seq length
+        # Since vmap doesn't support `if statement` we workaround it with `torch.where`
+        safe_q_idx = torch.where(q_idx < token_type_ids.shape[1], q_idx, 0)
+        safe_kv_idx = torch.where(kv_idx < token_type_ids.shape[1], kv_idx, 0)
+
+        token_type_ids_at_q_idx = token_type_ids[batch_idx, safe_q_idx]
+        token_type_ids_at_q_idx = torch.where(q_idx < token_type_ids.shape[1], token_type_ids_at_q_idx, 0)
+
+        token_type_ids_at_kv_idx = token_type_ids[batch_idx, safe_kv_idx]
+        token_type_ids_at_kv_idx = torch.where(kv_idx < token_type_ids.shape[1], token_type_ids_at_kv_idx, 0)
+
+        image_group_ids_at_q_idx = image_group_ids[batch_idx, safe_q_idx]
+        image_group_ids_at_q_idx = torch.where(q_idx < image_group_ids.shape[1], image_group_ids_at_q_idx, -1)
+
+        image_group_ids_at_kv_idx = image_group_ids[batch_idx, safe_kv_idx]
+        image_group_ids_at_kv_idx = torch.where(kv_idx < image_group_ids.shape[1], image_group_ids_at_kv_idx, -1)
+
+        is_image_block = (token_type_ids_at_q_idx == 1) & (token_type_ids_at_kv_idx == 1)
+        same_image_block = image_group_ids_at_q_idx == image_group_ids_at_kv_idx
+
+        # This is bidirectional attention whenever we are dealing with image tokens
+        return is_image_block & same_image_block
+
+    return inner_mask
+
+
+@deprecate_kwarg("input_embeds", version="5.6.0", new_name="inputs_embeds")
+def create_causal_mask_mapping(
+    config: PreTrainedConfig,
+    inputs_embeds: torch.Tensor,
+    attention_mask: torch.Tensor | None,
+    past_key_values: Cache | None,
+    position_ids: torch.Tensor | None,
+    token_type_ids: torch.Tensor | None = None,
+    pixel_values: torch.FloatTensor | None = None,
+    is_training: bool | None = False,
+    is_first_iteration: bool | None = None,
+    **kwargs,
+) -> dict:
+    """
+    Overwrites the base `create_masks_for_generate` with `token_type_ids` masking to create the causal mask mapping
+    for all kinds of forward passes. Paligemma uses a bidirectional mask on the prompt tokens.
+
+    Uses `pixel_values` as an optional input to disambiguate edge cases.
+    """
+    if is_training and token_type_ids is None:
+        raise ValueError("`token_type_ids` is required as a model input when training")
+
+    mask_kwargs = {
+        "config": config.get_text_config(),
+        "inputs_embeds": inputs_embeds,
+        "attention_mask": attention_mask,
+        "past_key_values": past_key_values,
+        "position_ids": position_ids,
+    }
+    # Infer if prefill or decoding stage, if the flag isn't passed. This happens only when the mask is constructed
+    # from `forward` call. If users run a `forward` call, we have no option to infer `is_first_iteration` because users may be
+    # running generation with custom loop. Thus we need to infer it in a `non-perfect` way
+    # NOTE: Determining prefill in that case requires checking data values, which is not compile-compatible.
+    is_first_iteration = is_first_iteration or (
+        past_key_values is None or not past_key_values.is_initialized or pixel_values is not None
+    )
+
+    if is_first_iteration or not kwargs.get("use_cache", True):
+        if token_type_ids is not None:
+            # The logic bellow was originally written for Gemma3, where `token_type_ids` is reversed. Let's reverse
+            # it to then use exactly the same logic.
+            token_type_ids = 1 - token_type_ids
+        else:
+            logger.warning_once(
+                "It is a prefill stage but The `token_type_ids` is not provided. We recommend "
+                "passing `token_type_ids` to the model to prevent bad attention masking."
+            )
+            # NOTE: this branch can't be reached when training because `token_type_ids` is required as a model input.
+            token_type_ids = torch.ones_like(inputs_embeds)[:, :, 0]
+
+    # Logic originally copied from Gemma3. It holds up for Paligemma as well because Paligemma assumes up to one image
+    # per prompt AND we reverse `token_type_ids` above. Gemma3 uses a bidirectional mask for images, tagged through
+    # `token_type_ids` 1s.
+    if token_type_ids is not None and is_first_iteration:
+        # We need to pass an additional mask function to account for token type ids, and it needs to be an `or` (to
+        # undo the causal masking)
+
+        # First find where a new image block starts: 1 if image and previous not image
+        # The images cannot attend to future images, but can attend to all prev images and to itself bidirectionally
+        is_image = (token_type_ids == 1).to(inputs_embeds.device)
+        is_previous_image = nn.functional.pad(is_image, (1, 0), value=0)[:, :-1]
+        new_image_start = is_image & ~is_previous_image
+        image_group_ids = torch.cumsum(new_image_start.int(), dim=1) - 1
+        image_group_ids = torch.where(is_image, image_group_ids, torch.full_like(token_type_ids, -1))
+        mask_kwargs["or_mask_function"] = token_type_ids_mask_function(
+            token_type_ids.to(inputs_embeds.device), image_group_ids
+        )
+
+    return create_masks_for_generate(**mask_kwargs)
+
+
 @auto_docstring
 class PaliGemmaPreTrainedModel(PreTrainedModel):
     config: PaliGemmaConfig
@@ -174,9 +286,9 @@ class PaliGemmaModel(PaliGemmaPreTrainedModel):
 
         n_image_tokens = special_image_mask.sum()
         n_image_features = image_features.shape[0] * image_features.shape[1]
-        special_image_mask = special_image_mask.unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
+        special_image_mask = special_image_mask.unsqueeze(-1).to(inputs_embeds.device)
         torch_compilable_check(
-            inputs_embeds[special_image_mask].numel() == image_features.numel(),
+            n_image_tokens * inputs_embeds.shape[-1] == image_features.numel(),
             f"Image features and image tokens do not match, tokens: {n_image_tokens}, features: {n_image_features}",
         )
         return special_image_mask
