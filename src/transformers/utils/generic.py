@@ -904,7 +904,7 @@ def can_return_tuple(func):
         return_dict_passed = kwargs.pop("return_dict", return_dict)
         if return_dict_passed is not None:
             return_dict = return_dict_passed
-        output = func(self, *args, **kwargs)
+        output = func(self, *args, **kwargs, return_dict=True)
         if not return_dict and not isinstance(output, tuple):
             output = output.to_tuple()
         return output
