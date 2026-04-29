@@ -1103,21 +1103,25 @@ class Trainer:
         else:
             return None
 
+    def _get_signature_columns(self) -> list[str]:
+        """Return dataset columns accepted by the model's forward method."""
+        model_to_inspect = self.model
+        if _is_peft_model(self.model):
+            if hasattr(self.model, "get_base_model"):
+                model_to_inspect = self.model.get_base_model()
+            else:
+                # PeftMixedModel do not provide a `get_base_model` method
+                model_to_inspect = self.model.base_model.model
+        signature = inspect.signature(model_to_inspect.forward)
+        columns = list(signature.parameters.keys())
+        # Labels may be named label or label_ids, the default data collator handles that.
+        columns += list(set(["label", "label_ids"] + self.label_names))
+        return columns
+
     def _set_signature_columns_if_needed(self) -> None:
         """Populate `_signature_columns` from the model's forward signature if not already set."""
         if self._signature_columns is None:
-            # Inspect model forward signature to keep only the arguments it accepts.
-            model_to_inspect = self.model
-            if _is_peft_model(self.model):
-                if hasattr(self.model, "get_base_model"):
-                    model_to_inspect = self.model.get_base_model()
-                else:
-                    # PeftMixedModel do not provide a `get_base_model` method
-                    model_to_inspect = self.model.base_model.model
-            signature = inspect.signature(model_to_inspect.forward)
-            self._signature_columns = list(signature.parameters.keys())
-            # Labels may be named label or label_ids, the default data collator handles that.
-            self._signature_columns += list(set(["label", "label_ids"] + self.label_names))
+            self._signature_columns = self._get_signature_columns()
 
     def _remove_unused_columns(
         self, dataset: "datasets.Dataset", description: str | None = None
