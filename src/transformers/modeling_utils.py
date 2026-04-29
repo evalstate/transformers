@@ -4796,8 +4796,11 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
                     pass  # may happen when handling pre-quantized weights
             self._is_hf_initialized = True
 
+        if is_quantized:
+            return
+
         # This will only initialize submodules that are not marked as initialized by the line above.
-        if is_deepspeed_zero3_enabled() and not is_quantized and not self.has_ep:
+        if is_deepspeed_zero3_enabled() and not self.has_ep:
             import deepspeed
 
             # keep_vars=True as we need the original tensors, so that the "_is_hf_initialized" is present on them
