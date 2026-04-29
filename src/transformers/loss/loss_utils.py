@@ -24,6 +24,7 @@ from .loss_for_object_detection import ForObjectDetectionLoss, ForSegmentationLo
 from .loss_grounding_dino import GroundingDinoForObjectDetectionLoss
 from .loss_lw_detr import LwDetrForObjectDetectionLoss
 from .loss_rt_detr import RTDetrForObjectDetectionLoss
+from .loss_tdt import ParakeetForTDTLoss
 
 
 def fixed_cross_entropy(
@@ -167,4 +168,5 @@ LOSS_MAPPING = {
     "Deimv2ForObjectDetection": Deimv2ForObjectDetectionLoss,
     "CsmForConditionalGeneration": ForCausalLMLoss,
     "LwDetrForObjectDetection": LwDetrForObjectDetectionLoss,
+    "ParakeetForTDT": ParakeetForTDTLoss,
 }

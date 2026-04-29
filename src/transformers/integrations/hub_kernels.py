@@ -290,6 +290,7 @@ _HUB_KERNEL_MAPPING: dict[str, dict[str, str]] = {
     "finegrained-fp8": {"repo_id": "kernels-community/finegrained-fp8", "version": 1},
     "deep-gemm": {"repo_id": "kernels-community/deep-gemm", "version": 1},
     "sonic-moe": {"repo_id": "IlyasMoutawwakil/sonic-moe", "revision": "main"},
+    "tdt-loss": {"repo_id": "eustlb/tdt-loss", "revision": "v1"},
 }
 
 _KERNEL_MODULE_MAPPING: dict[str, ModuleType | None] = {}
@@ -384,8 +385,9 @@ def lazy_load_kernel(kernel_name: str, mapping: dict[str, ModuleType | None] = _
             # repos (e.g. user/team forks) without requiring the per-call `allow_all_kernels` flag.
             kernel = get_kernel(repo_id, revision=revision, version=version, allow_all_kernels=True)
             mapping[kernel_name] = kernel
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             mapping[kernel_name] = None
+            logger.warning_once(f"Failed to load kernel {kernel_name}: {e}")
         except AssertionError:
             # Happens when torch is built without an accelerator backend; fall back to slow path.
             mapping[kernel_name] = None
