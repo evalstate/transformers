@@ -80,6 +80,9 @@ class GptqHfQuantizer(HfQuantizer):
     def update_device_map(self, device_map):
         if device_map is None:
             device_map = {"": torch.device("cpu")}
+        # Only auto-gptq does not support CPU, so move the model to cuda if available.
+        if not is_gptqmodel_available() and device_map in ("cpu", {"": torch.device("cpu")}):
+            device_map = {"": 0}
         return device_map
 
     def _process_model_before_weight_loading(self, model: "PreTrainedModel", **kwargs):
