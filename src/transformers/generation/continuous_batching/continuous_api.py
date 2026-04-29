@@ -943,7 +943,6 @@ class ContinuousBatchingManager:
         if self.batch_processor is not None:
             self.batch_processor.scheduler.set_request_cancellation(request_id)
 
-    # TODO:handle benchmarking properly when updating / fixing the requeue logic
     def get_result(self, request_id: str | None = None, timeout: float | None = None) -> GenerationOutput | None:
         """Retrieve one result from the output queue.
 
@@ -956,14 +955,28 @@ class ContinuousBatchingManager:
         """
         if self._generation_thread is None and self.output_router.output_queue.empty():
             return None
+
+        deadline = None if timeout is None else perf_counter() + timeout
+        deferred: list[GenerationOutput] = []
+
         try:
-            result = self.output_router.output_queue.get(block=True, timeout=timeout)
-            if request_id is not None and result.request_id != request_id:
-                self.output_router.output_queue.put(result)
-                return None
-            return result
-        except queue.Empty:
-            return None
+            while True:
+                remaining = None if deadline is None else max(0.0, deadline - perf_counter())
+                if remaining == 0.0:
+                    return None
+
+                try:
+                    result = self.output_router.output_queue.get(timeout=remaining)
+                except queue.Empty:
+                    return None
+
+                if request_id is None or result.request_id == request_id:
+                    return result
+
+                deferred.append(result)
+        finally:
+            for item in deferred:
+                self.output_router.output_queue.put(item)
 
     def __iter__(self):
         """Iterate over results as they become available."""
@@ -980,9 +993,14 @@ class ContinuousBatchingManager:
         """
         while self._generation_thread is not None and self._generation_thread.is_alive():
             result = self.get_result(request_id=request_id, timeout=0.1)
+
             if result is not None:
                 yield result
                 if result.is_finished():
+                    return
+
+            if self.batch_processor is not None:
+                if self.batch_processor.scheduler.request_is_cancelled(request_id):
                     return
 
     def register_result_handler(self, request_id: str, callback: Callable) -> None:
