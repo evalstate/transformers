@@ -1745,19 +1745,18 @@ class TrainerBestModelTest(TestCasePlus, TrainerIntegrationCommon):
 
     def test_metric_for_best_model_behavior(self):
         # Case 1: Metric name not provided when `save_strategy == "best"`.
-        # Should raise ValueError.
+        # `metric_for_best_model` should be set to `"loss"` by default.
         with tempfile.TemporaryDirectory() as tmpdir:
-            with self.assertRaises(ValueError) as context:
-                trainer = get_regression_trainer(
-                    a=1.5,
-                    b=2.5,
-                    output_dir=tmpdir,
-                    learning_rate=0.1,
-                    eval_strategy="epoch",
-                    save_strategy="best",
-                    compute_metrics=AlmostAccuracy(),
-                )
-            self.assertIn("`args.metric_for_best_model` must be provided", str(context.exception))
+            trainer = get_regression_trainer(
+                a=1.5,
+                b=2.5,
+                output_dir=tmpdir,
+                learning_rate=0.1,
+                eval_strategy="epoch",
+                save_strategy="best",
+                compute_metrics=AlmostAccuracy(),
+            )
+            self.assertTrue(trainer.args.metric_for_best_model == "loss")
 
         # Case 2: Metric name not provided when `load_best_model_at_end == True`.
         # `metric_for_best_model` should be set to `"loss"` by default.

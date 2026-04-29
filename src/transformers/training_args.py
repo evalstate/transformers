@@ -533,8 +533,8 @@ class TrainingArguments:
             `save_steps` must be a multiple of `eval_steps`.
             </Tip>
         metric_for_best_model (`str`, *optional*):
-            Metric to use for comparing models when `load_best_model_at_end=True`. Must be a metric
-            name returned by evaluation, with or without the `"eval_"` prefix. Defaults to `"loss"`.
+            Metric to use for comparing models when `load_best_model_at_end=True` or `save_strategy="best"`.
+            Must be a metric name returned by evaluation, with or without the `"eval_"` prefix. Defaults to `"loss"`.
             If you set this, `greater_is_better` will default to `True` unless the name ends with
             `"loss"`. Examples: `"accuracy"`, `"f1"`, `"eval_bleu"`.
         greater_is_better (`bool`, *optional*):
@@ -1551,6 +1551,7 @@ class TrainingArguments:
             self.load_best_model_at_end
             or self.lr_scheduler_type == SchedulerType.REDUCE_ON_PLATEAU
             or self.lr_scheduler_type == SchedulerType.GREEDY
+            or self.save_strategy == SaveStrategy.BEST
         ) and self.metric_for_best_model is None:
             self.metric_for_best_model = "loss"
         if self.greater_is_better is None and self.metric_for_best_model is not None:

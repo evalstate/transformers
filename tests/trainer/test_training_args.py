@@ -225,6 +225,16 @@ class TestTrainingArguments(unittest.TestCase):
         self.assertEqual(args.metric_for_best_model, "loss")
         self.assertFalse(args.greater_is_better)
 
+        # save_strategy="best" with no metric → defaults to "loss"
+        args = TrainingArguments(
+            output_dir="tmp",
+            eval_strategy="epoch",
+            save_strategy="best",
+            report_to=None,
+        )
+        self.assertEqual(args.metric_for_best_model, "loss")
+        self.assertFalse(args.greater_is_better)
+
         # metric ending in "loss" → greater_is_better is False
         args = TrainingArguments(
             output_dir="tmp",
