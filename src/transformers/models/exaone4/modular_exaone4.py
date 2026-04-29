@@ -127,15 +127,29 @@ class Exaone4Config(PreTrainedConfig):
     layer_types: list[str] | None = None
 
     def __post_init__(self, **kwargs):
-        if self.sliding_window is None:
-            self.sliding_window_pattern = 0
         if self.layer_types is None:
-            self.layer_types = [
-                "sliding_attention"
-                if ((i + 1) % (self.sliding_window_pattern) != 0 and i < self.num_hidden_layers)
-                else "full_attention"
-                for i in range(self.num_hidden_layers)
-            ]
+            if self.sliding_window in (None, 0):
+                self.layer_types = ["full_attention"] * self.num_hidden_layers
+            elif isinstance(self.sliding_window_pattern, str) and self.sliding_window_pattern:
+                layer_pattern = [
+                    "sliding_attention" if layer_type.upper() == "L" else "full_attention"
+                    for layer_type in self.sliding_window_pattern
+                ]
+                self.layer_types = [
+                    layer_pattern[i % len(layer_pattern)] for i in range(self.num_hidden_layers - 1)
+                ] + ["full_attention"]
+            else:
+                repeat_period = (
+                    self.sliding_window_pattern
+                    if isinstance(self.sliding_window_pattern, int) and self.sliding_window_pattern > 0
+                    else 1
+                )
+                self.layer_types = [
+                    "sliding_attention"
+                    if (i + 1) % repeat_period != 0 and i < self.num_hidden_layers - 1
+                    else "full_attention"
+                    for i in range(self.num_hidden_layers)
+                ]
 
         super().__post_init__(**kwargs)
 
