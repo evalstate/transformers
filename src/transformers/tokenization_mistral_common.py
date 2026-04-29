@@ -191,28 +191,28 @@ _VALID_INIT_KWARGS = {"_from_auto", "backend", "files_loaded"}
 @requires(backends=("mistral-common",))
 class MistralCommonBackend(PreTrainedTokenizerBase):
     """
-    Class to wrap `mistral-common` tokenizers.
+        Class to wrap `mistral-common` tokenizers.
 
-    `mistral-common` is the official tokenizer library for Mistral AI models. To use it, you need to install it with:
+        `mistral-common` is the official tokenizer library for Mistral AI models. To use it, you need to install it with:
 
-    ```bash
-    pip install transformers[mistral-common]
-    ```
+        ```bash
+        pip install transformers[mistral-common]
+        ```
 
-    Otherwise the tokenizer falls back to the Transformers implementation of the tokenizer.
+        Otherwise the tokenizer falls back to the Transformers implementation of the tokenizer.
 
-    For more info on `mistral-common`, see [mistral-common](https://github.com/mistralai/mistral-common).
+        For more info on `mistral-common`, see [mistral-common](https://github.com/mistralai/mistral-common).
 
-    This class is a wrapper around a `mistral_common.tokens.tokenizers.mistral.MistralTokenizer`.
-    It provides a Hugging Face compatible interface to tokenize using the official mistral-common tokenizer and inherits from the `PreTrainedTokenizerBase` class.
+        This class is a wrapper around a `mistral_common.tokens.tokenizers.mistral.MistralTokenizer`.
+        It provides a Hugging Face compatible interface to tokenize using the official mistral-common tokenizer and inherits from the `PreTrainedTokenizerBase` class.
 
-    Here are the key behavior differences with the `PythonBackend` class:
+        Here are the key behavior differences with the `PythonBackend` class:
 
     - Pair of sequences are not supported. The signature has been kept for compatibility but all arguments related to pair of sequences are ignored. The return values for pairs are returned as `None`.
-    - The `is_split_into_words` argument is not supported.
-    - It is not possible to add new tokens to the tokenizer. Special tokens are handled differently from Transformers. In `mistral-common`, special tokens are never encoded directly. This means that: `tokenizer.encode("<s>")` will not return the ID of the `<s>` token. Instead, it will return a list of IDs corresponding to the tokenization of the string `"<s>"`. For more information, see the [mistral-common documentation](https://mistralai.github.io/mistral-common/usage/tokenizers/#special-tokens).
+        - The `is_split_into_words` argument is not supported.
+        - It is not possible to add new tokens to the tokenizer. Special tokens are handled differently from Transformers. In `mistral-common`, special tokens are never encoded directly. This means that: `tokenizer.encode("<s>")` will not return the ID of the `<s>` token. Instead, it will return a list of IDs corresponding to the tokenization of the string `"<s>"`. For more information, see the [mistral-common documentation](https://mistralai.github.io/mistral-common/usage/tokenizers/#special-tokens).
 
-    If you have suggestions to improve this class, please open an issue on the [mistral-common GitHub repository](https://github.com/mistralai/mistral-common/issues) if it is related to the tokenizer or on the [Transformers GitHub repository](https://github.com/huggingface/transformers/issues) if it is related to the Hugging Face interface.
+        If you have suggestions to improve this class, please open an issue on the [mistral-common GitHub repository](https://github.com/mistralai/mistral-common/issues) if it is related to the tokenizer or on the [Transformers GitHub repository](https://github.com/huggingface/transformers/issues) if it is related to the Hugging Face interface.
     """
 
     model_input_names: list[str] = ["input_ids", "attention_mask"]
@@ -626,6 +626,13 @@ class MistralCommonBackend(PreTrainedTokenizerBase):
         if one_token:
             return ids[0]
         return ids
+
+    def convert_tokens_to_string(self, tokens) -> str:
+        """Converts a sequence of tokens (string) in a single string."""
+        ids = []
+        for token in tokens:
+            ids.append(self._tekken_piece_to_id(token, False))
+        return self.decode(ids)
 
     def _text_to_ids(self, text: TextInput, add_special_tokens: bool) -> list[int]:
         """
