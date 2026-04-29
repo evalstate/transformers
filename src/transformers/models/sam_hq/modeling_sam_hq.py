@@ -414,7 +414,9 @@ class SamHQPositionalEmbedding(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.scale = config.scale
-        self.positional_embedding = nn.Parameter(self.scale * torch.randn((2, config.num_pos_feats)))
+        self.positional_embedding = nn.Parameter(
+            self.scale * torch.randn((2, config.num_pos_feats)), requires_grad=False
+        )
 
     def forward(self, input_coords, input_shape=None):
         """Positionally encode points that are normalized to [0,1]."""
@@ -1246,6 +1248,9 @@ class SamHQModel(SamHQPreTrainedModel):
         config.mask_decoder_config._attn_implementation = config._attn_implementation
 
         self.mask_decoder = SamHQMaskDecoder(config.mask_decoder_config)
+
+        # Share positional embedding (matching original SAM-HQ architecture)
+        self.prompt_encoder.shared_embedding = self.shared_image_embedding
         self.post_init()
 
     def get_input_embeddings(self):

@@ -395,7 +395,16 @@ class SamHQModel(SamModel):
 
         self.mask_decoder = SamHQMaskDecoder(config.mask_decoder_config)
 
+        # Share positional embedding (matching original SAM-HQ architecture)
+        self.prompt_encoder.shared_embedding = self.shared_image_embedding
+
         self.post_init()
+
+    def get_expanded_tied_weights_keys(self, all_submodels: bool = False) -> dict:
+        # Override needed because default requires tie_word_embeddings=True (for language models)
+        if self._tied_weights_keys is None:
+            return {}
+        return self._tied_weights_keys.copy()
 
     @torch.no_grad()
     def get_image_embeddings(
