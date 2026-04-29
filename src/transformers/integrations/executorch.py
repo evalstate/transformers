@@ -13,8 +13,10 @@
 import logging
 
 import torch
+import torch.utils._pytree as pytree
 
 from ..cache_utils import (
+    Cache,
     DynamicCache,
     DynamicLayer,
     DynamicSlidingWindowLayer,
@@ -25,10 +27,7 @@ from ..cache_utils import (
 )
 from ..generation.configuration_utils import GenerationConfig
 from ..modeling_utils import PreTrainedModel
-from ..pytorch_utils import (
-    is_torch_greater_or_equal,
-    is_torch_greater_or_equal_than_2_6,
-)
+from ..pytorch_utils import is_torch_greater_or_equal
 
 
 class TorchExportableModuleForVLM:
@@ -881,7 +880,7 @@ class Seq2SeqLMDecoderExportableModuleWithStaticCache(torch.nn.Module):
         self.static_cache.early_initialization(batch_size, num_heads, head_dim, torch.float32, model_device)
         self.cache = EncoderDecoderCache(self.static_cache, DynamicCache(config=self.config))
 
-        register_dynamic_cache_export_support()
+        register_pytree_cache()
 
         # Register cache buffers to make them exportable
         for i, layer in enumerate(self.static_cache.layers):
@@ -1109,7 +1108,7 @@ def export_with_dynamic_cache(
         Exported program (`torch.export.ExportedProgram`): The exported program generated via `torch.export`.
     """
 
-    register_dynamic_cache_export_support()
+    register_pytree_cache()
 
     with torch.no_grad():
         exported_program = torch.export.export(
@@ -1126,50 +1125,97 @@ def export_with_dynamic_cache(
         return exported_program
 
 
-def register_dynamic_cache_export_support():
-    """
-    Utilities for `DynamicCache` <> torch.export support
-    """
-
+def _register_pytree_node(cls, flatten_fn, unflatten_fn, flatten_with_keys_fn):
     try:
-        torch.utils._pytree.register_pytree_node(
-            DynamicCache,
-            lambda dynamic_cache: torch.utils._pytree._dict_flatten(_get_cache_dict(dynamic_cache)),
-            _unflatten_dynamic_cache,
-            serialized_type_name=f"{DynamicCache.__module__}.{DynamicCache.__name__}",
-            flatten_with_keys_fn=lambda dynamic_cache: torch.utils._pytree._dict_flatten_with_keys(
-                _get_cache_dict(dynamic_cache)
-            ),
+        pytree.register_pytree_node(
+            cls,
+            flatten_fn,
+            unflatten_fn,
+            serialized_type_name=f"{cls.__module__}.{cls.__name__}",
+            flatten_with_keys_fn=flatten_with_keys_fn,
         )
-        # TODO (tmanlaibaatar) This won't be needed in torch 2.7.
-        torch.fx._pytree.register_pytree_flatten_spec(
-            DynamicCache,
-            lambda cache, spec: torch.fx._pytree._dict_flatten_spec(_get_cache_dict(cache), spec),
-        )
-    # Catching this in case there are multiple runs for some test runs
-    except ValueError as e:
-        if "already registered as pytree node" not in str(e):
+    except ValueError as error:
+        if "already registered as pytree node" not in str(error):
             raise
 
 
-def _get_cache_dict(cache: DynamicCache):
-    """Convert cache to dictionary format for pytree operations."""
-    if any(not isinstance(layer, (DynamicLayer, DynamicSlidingWindowLayer)) for layer in cache.layers):
-        raise RuntimeError("This pytree flattening function should only be applied to DynamicCache")
+def _register_pytree_cache_layer(cache_layer_cls):
+    def _flatten_layer(layer):
+        attributes = {
+            "keys": layer.keys,
+            "values": layer.values,
+            "is_initialized": layer.is_initialized,
+        }
+        for name in (
+            "max_cache_len",
+            "max_batch_size",
+            "num_heads",
+            "k_head_dim",
+            "v_head_dim",
+            "cumulative_length",
+            "cumulative_length_int",
+            "sliding_window",
+        ):
+            if hasattr(layer, name):
+                attributes[name] = getattr(layer, name)
+        return list(attributes.values()), list(attributes.keys())
 
-    if not is_torch_greater_or_equal_than_2_6:
-        logging.warning("DynamicCache + torch.export is tested on torch 2.6.0+ and may not work on earlier versions.")
+    def _unflatten_layer(values, context):
+        attributes = dict(zip(context, values))
 
-    return {
-        "cache": [(layer.keys, layer.values) for layer in cache.layers if layer.keys is not None],
-    }
+        if cache_layer_cls is StaticLayer:
+            layer = cache_layer_cls(max_cache_len=attributes["max_cache_len"])
+        elif cache_layer_cls is StaticSlidingWindowLayer:
+            layer = cache_layer_cls(
+                max_cache_len=attributes["max_cache_len"],
+                sliding_window=attributes["max_cache_len"],
+            )
+        elif cache_layer_cls is DynamicSlidingWindowLayer:
+            layer = cache_layer_cls(sliding_window=attributes["sliding_window"])
+        else:
+            layer = cache_layer_cls()
+
+        for name, value in attributes.items():
+            setattr(layer, name, value)
+        return layer
+
+    def _flatten_layer_with_keys(layer):
+        values, context = _flatten_layer(layer)
+        return [(pytree.MappingKey(key), value) for key, value in zip(context, values)], context
+
+    _register_pytree_node(cache_layer_cls, _flatten_layer, _unflatten_layer, _flatten_layer_with_keys)
 
 
-def _unflatten_dynamic_cache(values, context: torch.utils._pytree.Context):
-    dictionary = torch.utils._pytree._dict_unflatten(values, context)
-    cache = DynamicCache()
-    # Reconstruct layers from keys and values lists
-    cache_list = dictionary.get("cache", [])
-    for i, (key, value) in enumerate(cache_list):
-        cache.update(key, value, i)
-    return cache
+def _register_pytree_cache(cache_cls):
+    def _flatten_cache(cache):
+        attributes = {
+            "layers": cache.layers,
+            "offloading": cache.offloading,
+            "only_non_sliding": getattr(cache, "only_non_sliding", True),
+        }
+        return list(attributes.values()), list(attributes.keys())
+
+    def _flatten_cache_with_keys(cache):
+        values, context = _flatten_cache(cache)
+        return [(pytree.MappingKey(key), value) for key, value in zip(context, values)], context
+
+    def _unflatten_cache(values, context):
+        attributes = dict(zip(context, values))
+        cache = Cache(
+            layers=attributes["layers"],
+            offloading=attributes["offloading"],
+            offload_only_non_sliding=attributes["only_non_sliding"],
+        )
+        cache.__class__ = cache_cls
+        return cache
+
+    _register_pytree_node(cache_cls, _flatten_cache, _unflatten_cache, _flatten_cache_with_keys)
+
+
+def register_pytree_cache():
+    """Register cache classes as pytrees for torch.export."""
+    for cache_layer_cls in (StaticLayer, StaticSlidingWindowLayer, DynamicLayer, DynamicSlidingWindowLayer):
+        _register_pytree_cache_layer(cache_layer_cls)
+
+    for cache_cls in (StaticCache, DynamicCache):
+        _register_pytree_cache(cache_cls)
