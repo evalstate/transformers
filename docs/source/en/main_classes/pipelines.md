@@ -461,6 +461,12 @@ Pipelines available for multimodal tasks include the following.
     - __call__
     - all
 
+### PromptableVisualSegmentationPipeline
+
+[[autodoc]] PromptableVisualSegmentationPipeline
+    - __call__
+    - all
+
 ## Parent class: `Pipeline`
 
 [[autodoc]] Pipeline

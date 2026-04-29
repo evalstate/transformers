@@ -131,6 +131,7 @@ OBJECTS_TO_IGNORE = {
     "AudioFlamingo3Processor",
     "FourOverSixConfig",
     "Llama4Processor",
+    "PromptableVisualSegmentationPipeline",
     # Deprecated
     "InputExample",
     "InputFeatures",
