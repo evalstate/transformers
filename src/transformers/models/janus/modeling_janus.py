@@ -1018,9 +1018,9 @@ class JanusModel(JanusPreTrainedModel):
 
         n_image_tokens = special_image_mask.sum()
         n_image_features = image_features.shape[0] * image_features.shape[1]
-        special_image_mask = special_image_mask.unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
+        special_image_mask = special_image_mask.unsqueeze(-1).to(inputs_embeds.device)
         torch_compilable_check(
-            inputs_embeds[special_image_mask].numel() == image_features.numel(),
+            n_image_tokens * inputs_embeds.shape[-1] == image_features.numel(),
             f"Image features and image tokens do not match, tokens: {n_image_tokens}, features: {n_image_features}",
         )
         return special_image_mask
@@ -1277,7 +1277,7 @@ class JanusForConditionalGeneration(JanusPreTrainedModel, GenerationMixin):
         input_ids, model_kwargs = self._expand_inputs_for_generation(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            expand_size=generation_config.num_return_sequences,
+            expand_size=generation_config.num_return_sequences or 1,
             **model_kwargs,
         )
 
@@ -1290,6 +1290,17 @@ class JanusForConditionalGeneration(JanusPreTrainedModel, GenerationMixin):
         attention_mask = attention_mask.repeat(2, 1)
         model_kwargs["attention_mask"] = attention_mask
 
+        # Ensure generation_kwargs exists with boi_token_id
+        if not hasattr(generation_config, "generation_kwargs") or generation_config.generation_kwargs is None:
+            generation_config.generation_kwargs = {}
+        if "boi_token_id" not in generation_config.generation_kwargs:
+            # Default boi_token_id - usually the image_token_id from config
+            generation_config.generation_kwargs["boi_token_id"] = getattr(self.config, "image_token_id", 0)
+
+        # Ensure pad_token_id is set
+        if generation_config.pad_token_id is None:
+            generation_config.pad_token_id = getattr(self.config, "pad_token_id", 0)
+
         # Mask all the tokens that are neither BOS nor BOI with pad token in the unconditional logits.
         mask = (input_tokens[batch_size:, :] != generation_config.bos_token_id) & (
             input_tokens[batch_size:, :] != generation_config.generation_kwargs["boi_token_id"]
@@ -1300,12 +1311,18 @@ class JanusForConditionalGeneration(JanusPreTrainedModel, GenerationMixin):
 
         if model_kwargs.get("past_key_values", None) is None:
             # Prepare cache if not provided.
+            # Need enough space for: input sequence + num_image_tokens iterations + safety margin
+            # The loop runs num_image_tokens times, starting from seq_len position
+            max_length = generation_config.max_length
+            min_cache_len = seq_len + num_image_tokens + 100  # Ensure enough buffer
+            if max_length is None:
+                max_length = min_cache_len
             model_kwargs["past_key_values"] = self._prepare_static_cache(
                 cache_implementation=generation_config.cache_implementation or "static",
                 # batch_size should account for both conditional/unconditional input; hence multiplied by 2.
                 batch_size=batch_size * 2,
-                # we should have at least a cache len of seq_len + num_image_tokens.
-                max_cache_len=max(generation_config.max_length, num_image_tokens + seq_len),
+                # we should have at least a cache len of seq_len + num_image_tokens + buffer.
+                max_cache_len=max(max_length, min_cache_len),
                 model_kwargs=model_kwargs,
             )
 

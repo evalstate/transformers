@@ -22,7 +22,7 @@ from torch import nn
 from ...cache_utils import Cache
 from ...configuration_utils import PreTrainedConfig
 from ...generation import GenerationMixin
-from ...masking_utils import create_masks_for_generate
+from ...masking_utils import create_causal_mask, create_masks_for_generate, create_sliding_window_causal_mask
 from ...modeling_flash_attention_utils import FlashAttentionKwargs
 from ...modeling_outputs import BaseModelOutputWithPast, BaseModelOutputWithPooling
 from ...modeling_utils import PreTrainedModel
@@ -100,29 +100,42 @@ class PaliGemmaMultiModalProjector(nn.Module):
         return hidden_states
 
 
-def token_type_ids_mask_function(group_ids: torch.Tensor) -> Callable:
+def token_type_ids_mask_function(
+    token_type_ids: torch.Tensor | None,
+    image_group_ids: torch.Tensor | None,
+) -> Callable | None:
     """
     This function adds the correct offsets to the `q_idx` and `kv_idx` as the torch API can only accept lengths,
     not start and end indices.
-    Args:
-        group_ids (`torch.Tensor`):
-            A tensor of shape `(bs, len)` assigning each token to a vision group. Tokens with the same group
-            come from the same input image. Text is denoted by `-1`.
     """
+    # Do not return an additional mask in this case
+    if token_type_ids is None:
+        return None
 
     def inner_mask(batch_idx: int, head_idx: int, q_idx: int, kv_idx: int) -> bool:
-        seq_length = group_ids.shape[-1]
+        # If it's 1 for both query and key/value, we are in an image block
+        # NOTE: static cache shape goes beyond input seq length, while token_type_ids.shape[1] == input seq length
+        # Since vmap doesn't support `if statement` we workaround it with `torch.where`
+        safe_q_idx = torch.where(q_idx < token_type_ids.shape[1], q_idx, 0)
+        safe_kv_idx = torch.where(kv_idx < token_type_ids.shape[1], kv_idx, 0)
 
-        # clamp indices because with static cache they can go beyond `group_ids.shape[-1]`
-        q_idx_clamped = q_idx.clamp(max=seq_length - 1)
-        kv_idx_clamped = kv_idx.clamp(max=seq_length - 1)
+        token_type_ids_at_q_idx = token_type_ids[batch_idx, safe_q_idx]
+        token_type_ids_at_q_idx = torch.where(q_idx < token_type_ids.shape[1], token_type_ids_at_q_idx, 0)
 
-        # Unmask if the q and kv come from same group which is not -1 (i.e. non-text)
-        q_group = group_ids[batch_idx, q_idx_clamped]
-        kv_group = group_ids[batch_idx, kv_idx_clamped]
-        q_group = torch.where(q_idx < seq_length, q_group, -1)
-        kv_group = torch.where(kv_idx < seq_length, kv_group, -1)
-        return (q_group == kv_group) & (q_group >= 0)
+        token_type_ids_at_kv_idx = token_type_ids[batch_idx, safe_kv_idx]
+        token_type_ids_at_kv_idx = torch.where(kv_idx < token_type_ids.shape[1], token_type_ids_at_kv_idx, 0)
+
+        image_group_ids_at_q_idx = image_group_ids[batch_idx, safe_q_idx]
+        image_group_ids_at_q_idx = torch.where(q_idx < image_group_ids.shape[1], image_group_ids_at_q_idx, -1)
+
+        image_group_ids_at_kv_idx = image_group_ids[batch_idx, safe_kv_idx]
+        image_group_ids_at_kv_idx = torch.where(kv_idx < image_group_ids.shape[1], image_group_ids_at_kv_idx, -1)
+
+        is_image_block = (token_type_ids_at_q_idx == 1) & (token_type_ids_at_kv_idx == 1)
+        same_image_block = image_group_ids_at_q_idx == image_group_ids_at_kv_idx
+
+        # This is bidirectional attention whenever we are dealing with image tokens
+        return is_image_block & same_image_block
 
     return inner_mask
 
@@ -160,10 +173,8 @@ def create_causal_mask_mapping(
     # from `forward` call. If users run a `forward` call, we have no option to infer `is_first_iteration` because users may be
     # running generation with custom loop. Thus we need to infer it in a `non-perfect` way
     # NOTE: Determining prefill in that case requires checking data values, which is not compile-compatible.
-    is_first_iteration = (
-        is_first_iteration
-        if is_first_iteration
-        else (past_key_values is None or not past_key_values.is_initialized or pixel_values is not None)
+    is_first_iteration = is_first_iteration or (
+        past_key_values is None or not past_key_values.is_initialized or pixel_values is not None
     )
 
     if is_first_iteration or not kwargs.get("use_cache", True):
@@ -191,9 +202,11 @@ def create_causal_mask_mapping(
         is_image = (token_type_ids == 1).to(inputs_embeds.device)
         is_previous_image = nn.functional.pad(is_image, (1, 0), value=0)[:, :-1]
         new_image_start = is_image & ~is_previous_image
-        group_ids = torch.cumsum(new_image_start.int(), dim=1) - 1
-        group_ids = torch.where(is_image, group_ids, torch.full_like(token_type_ids, -1))
-        mask_kwargs["or_mask_function"] = token_type_ids_mask_function(group_ids)
+        image_group_ids = torch.cumsum(new_image_start.int(), dim=1) - 1
+        image_group_ids = torch.where(is_image, image_group_ids, torch.full_like(token_type_ids, -1))
+        mask_kwargs["or_mask_function"] = token_type_ids_mask_function(
+            token_type_ids.to(inputs_embeds.device), image_group_ids
+        )
 
     return create_masks_for_generate(**mask_kwargs)
 
@@ -273,9 +286,9 @@ class PaliGemmaModel(PaliGemmaPreTrainedModel):
 
         n_image_tokens = special_image_mask.sum()
         n_image_features = image_features.shape[0] * image_features.shape[1]
-        special_image_mask = special_image_mask.unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
+        special_image_mask = special_image_mask.unsqueeze(-1).to(inputs_embeds.device)
         torch_compilable_check(
-            inputs_embeds[special_image_mask].numel() == image_features.numel(),
+            n_image_tokens * inputs_embeds.shape[-1] == image_features.numel(),
             f"Image features and image tokens do not match, tokens: {n_image_tokens}, features: {n_image_features}",
         )
         return special_image_mask
@@ -353,21 +366,30 @@ class PaliGemmaModel(PaliGemmaPreTrainedModel):
             )
             inputs_embeds = inputs_embeds.masked_scatter(special_image_mask, image_features)
 
-        # It may already have been prepared by e.g. `generate`
-        if not isinstance(causal_mask_mapping := attention_mask, dict):
-            causal_mask_mapping = create_causal_mask_mapping(
-                self.config,
-                inputs_embeds,
-                attention_mask,
-                past_key_values,
-                position_ids,
-                token_type_ids,
-                pixel_values,
-                is_training=self.training,
-            )
+        # Create the mask
+        mask_kwargs = {
+            "config": self.config.get_text_config(),
+            "inputs_embeds": inputs_embeds,
+            "attention_mask": attention_mask,
+            "past_key_values": past_key_values,
+            "position_ids": position_ids,
+        }
+        is_first_iteration = past_key_values is None or not past_key_values.is_initialized or pixel_values is not None
+        if token_type_ids is not None and is_first_iteration:
+            # Can attend bidirectionally in prefix and only causally in suffix
+            mask_kwargs["block_sequence_ids"] = torch.where(token_type_ids == 0, 0, -1)
+
+        # PG has no sliding window, only full attn. But PG2 needs sliding mask and full mask
+        causal_mask = create_causal_mask(**mask_kwargs)
+        if getattr(self.config.text_config, "sliding_window", None) is not None:
+            sliding_mask_kwargs = mask_kwargs.copy()
+            causal_mask = {
+                "full_attention": causal_mask,
+                "sliding_attention": create_sliding_window_causal_mask(**sliding_mask_kwargs),
+            }
 
         outputs = self.language_model(
-            attention_mask=causal_mask_mapping,
+            attention_mask=causal_mask,
             position_ids=position_ids,
             past_key_values=past_key_values,
             inputs_embeds=inputs_embeds,
@@ -535,16 +557,19 @@ class PaliGemmaForConditionalGeneration(PaliGemmaPreTrainedModel, GenerationMixi
         is_first_iteration: bool | None = False,
         **kwargs,
     ) -> dict:
-        # Uses the overwritten `create_masks_for_generate` with `token_type_ids` masking
-        return create_causal_mask_mapping(
-            config,
-            inputs_embeds,
-            attention_mask,
-            past_key_values,
-            position_ids,
-            token_type_ids,
-            is_first_iteration=is_first_iteration,
-            **{k: v for k, v in kwargs.items() if k != "pixel_values"},
+        group_ids = torch.full([*inputs_embeds.size()[:-1]], -1, device=inputs_embeds.device)
+        if token_type_ids is not None:
+            # First find where a new image block starts: 1 if image and previous not image
+            # The images cannot attend to future images, but can attend to all prev images and to itself bidirectionally
+            group_ids = torch.where(token_type_ids == 0, 0, -1)
+
+        return create_masks_for_generate(
+            config=config.get_text_config(),
+            inputs_embeds=inputs_embeds,
+            block_sequence_ids=group_ids,
+            attention_mask=attention_mask,
+            past_key_values=past_key_values,
+            position_ids=position_ids,
         )
 
 

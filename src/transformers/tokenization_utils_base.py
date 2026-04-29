@@ -1405,7 +1405,7 @@ class PreTrainedTokenizerBase(PushToHubMixin):
         """
         return self.convert_tokens_to_ids(self.all_special_tokens)
 
-    def _set_model_specific_special_tokens(self, special_tokens: dict[str, str | AddedToken]):
+    def _set_model_specific_special_tokens(self, special_tokens: dict[str, str | AddedToken] | list[str]):
         """
         Adds new model-specific special tokens (e.g., for multimodal models).
 
@@ -1413,8 +1413,11 @@ class PreTrainedTokenizerBase(PushToHubMixin):
         For example: if the model tokenizer is multimodal, we can support special image or audio tokens.
 
         Args:
-            special_tokens: Dictionary of {token_name: token_value}
+            special_tokens: Dictionary of {token_name: token_value}, or a list of token strings.
+                If a list is provided, each token is used as both the attribute name and value.
         """
+        if isinstance(special_tokens, list):
+            special_tokens = {tok: tok for tok in special_tokens}
         self.SPECIAL_TOKENS_ATTRIBUTES = self.SPECIAL_TOKENS_ATTRIBUTES + list(special_tokens.keys())
         for key, value in special_tokens.items():
             if isinstance(value, (str, AddedToken)):
@@ -1700,6 +1703,13 @@ class PreTrainedTokenizerBase(PushToHubMixin):
                 else:
                     vocab_files["vocab_file"] = match.group()
 
+        error_message = (
+            f"Can't load tokenizer for '{pretrained_model_name_or_path}'. If you were trying to load it from "
+            "'https://huggingface.co/models', make sure you don't have a local directory with the same name. "
+            f"Otherwise, make sure '{pretrained_model_name_or_path}' is the correct path to a directory "
+            f"containing all relevant files for a {cls.__name__} tokenizer."
+        )
+
         resolved_vocab_files = {}
         for file_id, file_path in vocab_files.items():
             if file_path is None:
@@ -1728,17 +1738,19 @@ class PreTrainedTokenizerBase(PushToHubMixin):
                     raise
                 except Exception:
                     # For any other exception, we throw a generic error.
-                    raise OSError(
-                        f"Can't load tokenizer for '{pretrained_model_name_or_path}'. If you were trying to load it from "
-                        "'https://huggingface.co/models', make sure you don't have a local directory with the same name. "
-                        f"Otherwise, make sure '{pretrained_model_name_or_path}' is the correct path to a directory "
-                        f"containing all relevant files for a {cls.__name__} tokenizer."
-                    )
+                    raise OSError(error_message)
                 commit_hash = extract_commit_hash(resolved_vocab_files[file_id], commit_hash)
 
-        for file_id, file_path in vocab_files.items():
-            if file_id not in resolved_vocab_files:
-                continue
+        loadable_file_ids = set(cls.vocab_files_names)
+        if loadable_file_ids and "tokenizer_file" in resolved_vocab_files:
+            loadable_file_ids.add("tokenizer_file")
+        loadable_file_ids.intersection_update(resolved_vocab_files)
+        if (
+            (local_files_only or is_local)
+            and loadable_file_ids
+            and all(resolved_vocab_files[file_id] is None for file_id in loadable_file_ids)
+        ):
+            raise OSError(error_message)
 
         return cls._from_pretrained(
             resolved_vocab_files,
@@ -3073,6 +3085,14 @@ class PreTrainedTokenizerBase(PushToHubMixin):
         else:
             conversations = [conversation]
             is_batched = False
+
+        # Normalize: drop `content` from assistant messages when it is None.
+        # Some APIs (e.g. OpenAI) return content=None for tool-call-only messages, but many chat templates
+        # crash or produce wrong output (e.g. rendering literal "None") when they encounter it.
+        conversations = [
+            [{k: v for k, v in msg.items() if k != "content" or v is not None} for msg in conversation]
+            for conversation in conversations
+        ]
 
         if continue_final_message:
             if add_generation_prompt:

@@ -49,6 +49,8 @@ CONFIG_MAPPING_NAMES = OrderedDict(**{"gpt-sw3": "GPT2Config"}, **CONFIG_MAPPING
 SPECIAL_MODEL_TYPE_TO_MODULE_NAME.update(
     {
         "EvollaModel": "evolla",
+        "mlcd_vision_model": "mlcd",
+        "penguinvl_vision": "penguinvl",
         "vibevoice_acoustic_tokenizer_encoder": "vibevoice_acoustic_tokenizer",
         "vibevoice_acoustic_tokenizer_decoder": "vibevoice_acoustic_tokenizer",
     }

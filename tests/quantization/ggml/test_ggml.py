@@ -309,8 +309,10 @@ class GgufModelTests(unittest.TestCase):
     gemma3_vision_model_id = "unsloth/gemma-3-4b-it-GGUF"
     qwen3_model_id = "Qwen/Qwen3-0.6B-GGUF"
     qwen3moe_model_id = "Qwen/Qwen3-30B-A3B-GGUF"
+    qwen35moe_model_id = "unsloth/Qwen3.6-35B-A3B-GGUF"
     umt5_encoder_model_id = "city96/umt5-xxl-encoder-gguf"
     lfm2_model_id = "LiquidAI/LFM2-1.2B-GGUF"
+    llama4_model_id = "unsloth/Llama-4-Scout-17B-16E-Instruct-GGUF"
 
     q4_0_phi3_model_id = "Phi-3-mini-4k-instruct-q4.gguf"
     q4_0_mistral_model_id = "mistral-7b-instruct-v0.2.Q4_0.gguf"
@@ -349,8 +351,10 @@ class GgufModelTests(unittest.TestCase):
     fp16_deci_model_id = "decilm-7b-uniform-gqa-f16.gguf"
     q8_0_qwen3_model_id = "Qwen3-0.6B-Q8_0.gguf"
     q4_k_m_qwen3moe_model_id = "Qwen3-30B-A3B-Q4_K_M.gguf"
+    iq3_s_qwen35moe_model_id = "Qwen3.6-35B-A3B-UD-IQ3_S.gguf"
     q8_0_umt5_encoder_model_id = "umt5-xxl-encoder-Q8_0.gguf"
     q4_k_m_lfm2_model_id = "LFM2-1.2B-Q4_K_M.gguf"
+    q2_k_l_llama4_model_id = "Llama-4-Scout-17B-16E-Instruct-Q2_K_L.gguf"
     gpt_oss_model_id = "unsloth/gpt-oss-20b-GGUF"
     gpt_oss_gguf_file = "gpt-oss-20b-Q5_K_M.gguf"
 
@@ -1095,6 +1099,22 @@ class GgufModelTests(unittest.TestCase):
         EXPECTED_TEXT = "Hello, I am a 20 year old male"
         self.assertEqual(tokenizer.decode(out[0], skip_special_tokens=True), EXPECTED_TEXT)
 
+    @unittest.skip("Heavyweight: ~12.7 GB GGUF download. Run manually.")
+    def test_qwen35moe_iq3_s(self):
+        # Smoke test for Qwen3.5/3.6 MoE GGUF support: tokenizer + model
+        # both load without error and the model produces non-empty output.
+        # A smaller fixture would be preferable; none was available at the
+        # time this test was added.
+        tokenizer = AutoTokenizer.from_pretrained(self.qwen35moe_model_id, gguf_file=self.iq3_s_qwen35moe_model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            self.qwen35moe_model_id,
+            gguf_file=self.iq3_s_qwen35moe_model_id,
+            dtype=torch.float16,
+        )
+        text = tokenizer(self.example_text, return_tensors="pt")
+        out = model.generate(**text, max_new_tokens=4)
+        self.assertGreater(len(tokenizer.decode(out[0], skip_special_tokens=True)), 0)
+
     def test_umt5_encoder_q8_0(self):
         """
         Verifies that a UMT5 encoder loads directly from a GGUF file using
@@ -1144,4 +1164,29 @@ class GgufModelTests(unittest.TestCase):
         out = model.generate(text, max_new_tokens=10)
 
         EXPECTED_TEXT = "Hello Atari 2600! es un videoj"
+        self.assertEqual(tokenizer.decode(out[0], skip_special_tokens=True), EXPECTED_TEXT)
+
+    @unittest.skipUnless(is_gguf_available("0.17.0"), "test requires gguf version >= 0.17.0")
+    def test_llama4_q2_k_l_tokenizer(self):
+        tokenizer = AutoTokenizer.from_pretrained(self.llama4_model_id, gguf_file=self.q2_k_l_llama4_model_id)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tokenizer.save_pretrained(tmpdirname)
+            tokenizer = AutoTokenizer.from_pretrained(tmpdirname)
+            special_sentence = "สวัสดี"
+            predicted_text = tokenizer.decode(tokenizer.encode(special_sentence, return_tensors="pt")[0])
+            self.assertEqual(predicted_text, "<|begin_of_text|>" + special_sentence)
+
+    @unittest.skipUnless(is_gguf_available("0.17.0"), "test requires gguf version >= 0.17.0")
+    def test_llama4_q2_k_l(self):
+        tokenizer = AutoTokenizer.from_pretrained(self.llama4_model_id, gguf_file=self.q2_k_l_llama4_model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            self.llama4_model_id,
+            gguf_file=self.q2_k_l_llama4_model_id,
+            dtype=torch.float16,
+        )
+
+        text = tokenizer(self.example_text, return_tensors="pt")["input_ids"]
+        out = model.generate(text, max_new_tokens=10)
+
+        EXPECTED_TEXT = "Hello, I'm here to help. What"
         self.assertEqual(tokenizer.decode(out[0], skip_special_tokens=True), EXPECTED_TEXT)

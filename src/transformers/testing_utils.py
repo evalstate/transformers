@@ -228,6 +228,34 @@ _VLM_COMMON_MODEL_NAMES_MAP = {
     "conditional_generation_class": "ForConditionalGeneration",
 }
 
+# Shared text-model defaults for CausalLMModelTester and MultiModalModelTester.
+_TEXT_MODEL_TESTER_DEFAULTS = {
+    "batch_size": 13,
+    "seq_length": 7,
+    "is_training": True,
+    "use_input_mask": True,
+    "use_labels": True,
+    "vocab_size": 99,
+    "hidden_size": 32,
+    "num_hidden_layers": 2,
+    "num_attention_heads": 2,
+    "num_key_value_heads": 2,
+    "intermediate_size": 32,
+    "hidden_act": "gelu",
+    "max_position_embeddings": 512,
+    "pad_token_id": 0,
+    "bos_token_id": 1,
+    "eos_token_id": 2,
+    "expert_interval": 1,
+    "moe_layer_start_index": 0,
+    "moe_intermediate_size": 16,
+    "shared_expert_intermediate_size": 36,
+    "shared_expert_gate": True,
+    "moe_num_shared_experts": 2,
+    "num_experts_per_tok": 2,
+    "num_experts": 8,
+}
+
 
 if is_torch_available():
     import torch
@@ -3207,23 +3235,24 @@ def get_device_properties() -> DeviceProperties:
     if IS_CUDA_SYSTEM or IS_ROCM_SYSTEM:
         import torch
 
-        major, minor = torch.cuda.get_device_capability()
-        if IS_ROCM_SYSTEM:
-            return ("rocm", major, minor)
-        else:
-            return ("cuda", major, minor)
-    elif IS_XPU_SYSTEM:
+        if torch.cuda.is_available():
+            major, minor = torch.cuda.get_device_capability()
+            if IS_ROCM_SYSTEM:
+                return ("rocm", major, minor)
+            else:
+                return ("cuda", major, minor)
+    if IS_XPU_SYSTEM:
         import torch
 
-        # To get more info of the architecture meaning and bit allocation, refer to https://github.com/intel/llvm/blob/sycl/sycl/include/sycl/ext/oneapi/experimental/device_architecture.def
-        arch = torch.xpu.get_device_capability()["architecture"]
-        gen_mask = 0x000000FF00000000
-        gen = (arch & gen_mask) >> 32
-        return ("xpu", gen, None)
-    elif IS_NPU_SYSTEM:
+        if torch.xpu.is_available():
+            # To get more info of the architecture meaning and bit allocation, refer to https://github.com/intel/llvm/blob/sycl/sycl/include/sycl/ext/oneapi/experimental/device_architecture.def
+            arch = torch.xpu.get_device_capability()["architecture"]
+            gen_mask = 0x000000FF00000000
+            gen = (arch & gen_mask) >> 32
+            return ("xpu", gen, None)
+    if IS_NPU_SYSTEM:
         return ("npu", None, None)
-    else:
-        return (torch_device, None, None)
+    return (torch_device, None, None)
 
 
 def unpack_device_properties(
@@ -3525,13 +3554,34 @@ def _get_call_arguments(code_context):
     return None
 
 
+def _get_patched_testing_methods_output_path() -> Path:
+    """Return the output path used by patched testing methods.
+
+    When `pytest-xdist` is enabled, each worker writes to its own file to avoid cross-worker clobbering.
+    """
+
+    output_dir = Path(os.environ.get("_PATCHED_TESTING_METHODS_OUTPUT_DIR", ""))
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+    filename = "captured_info.txt" if worker_id is None else f"captured_info_{worker_id}.txt"
+    return output_dir / filename
+
+
+def _clear_patched_testing_methods_output_files():
+    """Remove stale output files before patched testing methods start collecting info."""
+
+    output_dir = Path(os.environ.get("_PATCHED_TESTING_METHODS_OUTPUT_DIR", ""))
+    if os.environ.get("PYTEST_XDIST_WORKER") is None:
+        for path in output_dir.glob("captured_info*.txt"):
+            path.unlink(missing_ok=True)
+    else:
+        _get_patched_testing_methods_output_path().unlink(missing_ok=True)
+
+
 def _prepare_debugging_info(test_info, info):
     """Combine the information about the test and the call information to a patched function/method within it."""
 
     info = f"{test_info}\n\n{info}"
-    p = os.path.join(os.environ.get("_PATCHED_TESTING_METHODS_OUTPUT_DIR", ""), "captured_info.txt")
-    # TODO (ydshieh): This is not safe when we use pytest-xdist with more than 1 worker.
-    with open(p, "a") as fp:
+    with open(_get_patched_testing_methods_output_path(), "a") as fp:
         fp.write(f"{info}\n\n{'=' * 120}\n\n")
 
     return info
@@ -3761,8 +3811,7 @@ def patch_testing_methods_to_collect_info():
     This will allow us to collect the call information, e.g. the argument names and values, also the literal expressions
     passed as the arguments.
     """
-    p = os.path.join(os.environ.get("_PATCHED_TESTING_METHODS_OUTPUT_DIR", ""), "captured_info.txt")
-    Path(p).unlink(missing_ok=True)
+    _get_patched_testing_methods_output_path().unlink(missing_ok=True)
 
     if is_torch_available():
         import torch

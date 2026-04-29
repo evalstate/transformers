@@ -70,6 +70,7 @@ from .integrations.fsdp import get_fsdp_ckpt_kwargs, update_fsdp_plugin_peft
 from .integrations.liger import apply_liger_kernel
 from .integrations.neftune import activate_neftune, deactivate_neftune
 from .integrations.peft import MIN_PEFT_VERSION
+from .integrations.tensor_parallel import get_ep_sharded_param_names
 from .integrations.tpu import save_tpu_checkpoint, tpu_spmd_dataloader, wrap_model_xla_fsdp
 from .modelcard import TrainingSummary
 from .modeling_utils import PreTrainedModel, unwrap_model
@@ -447,13 +448,13 @@ class Trainer:
             elif len(devices) == 1:
                 self.is_model_parallel = self.args.device != torch.device(devices[0])
 
-        self.is_fsdp_xla_enabled = args.fsdp_config["xla"]
-        if len(args.fsdp) > 0:
+        self.is_fsdp_xla_enabled = args.fsdp and args.fsdp_config.get("xla", False)
+        if args.fsdp:
             if self.is_deepspeed_enabled:
                 raise ValueError(
                     "Using --fsdp xxx together with --deepspeed is not possible, deactivate one of those flags."
                 )
-            if not args.fsdp_config["xla"] and args.parallel_mode != ParallelMode.DISTRIBUTED:
+            if not self.is_fsdp_xla_enabled and args.parallel_mode != ParallelMode.DISTRIBUTED:
                 raise ValueError("Using fsdp only works in distributed training.")
 
         # Postpone switching model to cuda when MP, DeepSpeed, full bf16/fp16 eval, or FSDP
@@ -592,13 +593,16 @@ class Trainer:
         # Guards one-time LR scheduler creation in create_optimizer_and_scheduler
         self._created_lr_scheduler = False
 
+        self._tr_loss_components = {}
+        self._total_loss_components_scalar = {}
+
         self.control = self.callback_handler.on_init_end(self.args, self.state, self.control)
 
         # ---- 11. Finalize -----------------------------------------------------------
         if getattr(self.model, "config", None) is not None:
             self.model.config.use_cache = self.args.use_cache
 
-        self.is_fsdp_xla_v2_enabled = args.fsdp_config.get("xla_fsdp_v2", False)
+        self.is_fsdp_xla_v2_enabled = args.fsdp and args.fsdp_config.get("xla_fsdp_v2", False)
         if self.is_fsdp_xla_v2_enabled:
             if not IS_XLA_FSDPV2_POST_2_2:
                 raise ValueError("FSDPv2 requires `torch_xla` 2.2 or higher.")
@@ -726,7 +730,12 @@ class Trainer:
                 )
             args["parallelism_config"] = self.args.parallelism_config
 
-        if getattr(self.model, "tp_size", None) is not None and self.model.tp_size > 1:
+        # EP-sharded params are already DTensors on the EP mesh, not on a TP mesh.
+        if (
+            getattr(self.model, "tp_size", None) is not None
+            and self.model.tp_size > 1
+            and not getattr(self.model, "has_ep", False)
+        ):
             if self.args.parallelism_config is None:
                 if is_accelerate_available("1.12.0"):
                     if self.args.parallelism_config is None:
@@ -823,6 +832,11 @@ class Trainer:
         # post accelerator creation setup
         if self.is_fsdp_enabled:
             fsdp_plugin = self.accelerator.state.fsdp_plugin
+            # EP-sharded experts must not be re-sharded by FSDP,  their params are DTensors on the EP mesh.
+            ep_param_names = get_ep_sharded_param_names(self.model)
+            if ep_param_names:
+                module_names = list({n.rsplit(".", 1)[0] for n in ep_param_names})
+                fsdp_plugin.ignored_modules = [self.model.get_submodule(n) for n in module_names]
             for param in ["limit_all_gathers", "activation_checkpointing"]:
                 setattr(fsdp_plugin, param, self.args.fsdp_config.get(param, getattr(fsdp_plugin, param)))
             if fsdp_plugin.activation_checkpointing and self.args.gradient_checkpointing:
@@ -1557,6 +1571,16 @@ class Trainer:
 
     def _prepare_for_training(self, max_steps, train_dataloader, resume_from_checkpoint):
         """Wrap model, create optimizer and scheduler, and run accelerator.prepare. Returns (model, train_dataloader)."""
+        # DeepSpeed: clear stale inference engine refs left by evaluate()/predict()
+        # so that _wrap_model() and accelerator.prepare() can create a training engine.
+        if (
+            self.is_deepspeed_enabled
+            and self.accelerator.deepspeed_engine_wrapped is None
+            and self.model_wrapped is not self.model
+        ):
+            self.model_wrapped = self.model
+            self.deepspeed = None
+
         delay_optimizer_creation = is_sagemaker_mp_enabled() or self.is_fsdp_xla_enabled or self.is_fsdp_enabled
 
         # Can't delay optimizer creation when using FSDP2: https://github.com/huggingface/accelerate/blob/3f636d626063ffcf9a337c7d3624d61b7d187d59/src/accelerate/accelerator.py#L1404
@@ -1739,16 +1763,38 @@ class Trainer:
                 if (
                     self.args.logging_nan_inf_filter
                     and not is_torch_xla_available()
-                    and (torch.isnan(tr_loss_step) or torch.isinf(tr_loss_step))
+                    and (
+                        torch.isnan(tr_loss_step)
+                        if isinstance(tr_loss_step, torch.Tensor)
+                        else any(torch.isnan(v) for v in tr_loss_step.values())
+                    )
+                    or (
+                        torch.isinf(tr_loss_step)
+                        if isinstance(tr_loss_step, torch.Tensor)
+                        else any(torch.isinf(v) for v in tr_loss_step.values())
+                    )
                 ):
                     # if loss is nan or inf simply add the average of previous logged losses
                     self._tr_loss += self._tr_loss / (1 + self.state.global_step - self._globalstep_last_logged)
+                    if isinstance(tr_loss_step, dict):
+                        for k in tr_loss_step:
+                            if k in self._tr_loss_components:
+                                self._tr_loss_components[k] += self._tr_loss_components[k] / (
+                                    1 + self.state.global_step - self._globalstep_last_logged
+                                )
                 else:
-                    if self._tr_loss.device != tr_loss_step.device:
-                        raise ValueError(
-                            f"Calculated loss must be on the original device: {self._tr_loss.device} but device in use is {tr_loss_step.device}"
-                        )
-                    self._tr_loss += tr_loss_step
+                    if isinstance(tr_loss_step, dict):
+                        for k, v in tr_loss_step.items():
+                            if k not in self._tr_loss_components:
+                                self._tr_loss_components[k] = torch.tensor(0.0, device=self.args.device)
+                            self._tr_loss_components[k] += v
+                        self._tr_loss += tr_loss_step["loss"]
+                    else:
+                        if self._tr_loss.device != tr_loss_step.device:
+                            raise ValueError(
+                                f"Calculated loss must be on the original device: {self._tr_loss.device} but device in use is {tr_loss_step.device}"
+                            )
+                        self._tr_loss += tr_loss_step
 
                 self.current_flos += float(self.floating_point_ops(inputs))
                 self._track_num_input_tokens(inputs)
@@ -1905,8 +1951,14 @@ class Trainer:
                 loss_mb = smp_forward_backward(model, inputs, self.args.gradient_accumulation_steps)
                 return loss_mb.reduce_mean().detach().to(self.args.device)
 
+            return_outputs = self.args.logging_loss_components
             with self.compute_loss_context_manager():
-                loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
+                loss = self.compute_loss(
+                    model, inputs, return_outputs=return_outputs, num_items_in_batch=num_items_in_batch
+                )
+
+            if return_outputs:
+                loss, outputs = loss
 
             del inputs
             if (
@@ -1935,6 +1987,18 @@ class Trainer:
                 kwargs["scale_wrt_gas"] = False
 
             self.accelerator.backward(loss, **kwargs)
+
+            if return_outputs and isinstance(outputs, dict):
+                # Extract all loss-like components
+                loss_components = {
+                    k: v.detach()
+                    for k, v in outputs.items()
+                    if ("loss" in k or k in self.label_names) and isinstance(v, torch.Tensor) and v.numel() == 1
+                }
+                # Ensure the main loss is also included if not already
+                if "loss" not in loss_components:
+                    loss_components["loss"] = loss.detach()
+                return loss_components
 
             return loss.detach()
 
@@ -2066,6 +2130,15 @@ class Trainer:
             tr_loss -= tr_loss
 
             logs["loss"] = tr_loss_scalar / (self.state.global_step - self._globalstep_last_logged)
+
+            if self.args.logging_loss_components:
+                for k, v in self._tr_loss_components.items():
+                    v_scalar = nested_gather(v, self.args.parallel_mode).mean().item()
+                    self._tr_loss_components[k] -= self._tr_loss_components[k]
+                    logs[k] = v_scalar / (self.state.global_step - self._globalstep_last_logged)
+                    if k not in self._total_loss_components_scalar:
+                        self._total_loss_components_scalar[k] = 0.0
+                    self._total_loss_components_scalar[k] += v_scalar
             if grad_norm is not None:
                 logs["grad_norm"] = grad_norm.item() if isinstance(grad_norm, torch.Tensor) else grad_norm
             if learning_rate is not None:
@@ -2629,31 +2702,52 @@ class Trainer:
 
         prediction_loss_only = prediction_loss_only if prediction_loss_only is not None else args.prediction_loss_only
 
-        # if eval is called w/o train, handle model prep here
+        # if eval is called without train, handle model prep here
+        _ds_config_mutated = False
+        _need_ds_eval_engine = False
         if self.is_deepspeed_enabled and self.deepspeed is None:
-            _, _ = deepspeed_init(self, num_training_steps=0, inference=True)
+            hf_deepspeed_config = self.accelerator.state.deepspeed_plugin.hf_ds_config
+            # Only ZeRO-3 needs a DS inference engine (params are partitioned across GPUs).
+            # ZeRO-1/2 keep full params on each GPU and can eval without one.
+            _need_ds_eval_engine = hf_deepspeed_config.is_zero3()
+            if _need_ds_eval_engine:
+                # deepspeed_init(inference=True) mutates shared config (deletes optimizer,
+                # bakes scheduler "auto" to 0). Back up and restore after prepare().
+                import copy
+
+                _ds_config = hf_deepspeed_config.config
+                _saved_optimizer = copy.deepcopy(_ds_config.get("optimizer"))
+                _saved_sched_params = copy.deepcopy(_ds_config.get("scheduler", {}).get("params"))
+                _ds_config_mutated = True
+                _, _ = deepspeed_init(self, num_training_steps=0, inference=True)
 
         model = self._wrap_model(self.model, training=False)
 
-        if len(self.accelerator._models) == 0 and model is self.model:
-            start_time = time.time()
-            model = (
-                self.accelerator.prepare(model)
-                if self.is_deepspeed_enabled or (self.is_fsdp_enabled and not self.args.torch_compile)
-                else self.accelerator.prepare_model(model, evaluation_mode=True)
-            )
-            self.model_preparation_time = round(time.time() - start_time, 4)
+        try:
+            if len(self.accelerator._models) == 0 and model is self.model:
+                start_time = time.time()
+                if _need_ds_eval_engine or self.deepspeed is not None:
+                    model = self.accelerator.prepare(model)
+                elif self.is_fsdp_enabled and not self.args.torch_compile:
+                    model = self.accelerator.prepare(model)
+                else:
+                    model = self.accelerator.prepare_model(model, evaluation_mode=True)
+                self.model_preparation_time = round(time.time() - start_time, 4)
 
-            if self.is_fsdp_enabled:
-                self.model = model
+                if self.is_fsdp_enabled:
+                    self.model = model
 
-            # for the rest of this function `model` is the outside model, whether it was wrapped or not
-            if model is not self.model:
-                self.model_wrapped = model
+                if model is not self.model:
+                    self.model_wrapped = model
 
-            # backward compatibility
-            if self.is_deepspeed_enabled:
-                self.deepspeed = self.model_wrapped
+                if self.is_deepspeed_enabled and _need_ds_eval_engine:
+                    self.deepspeed = self.model_wrapped
+        finally:
+            if _ds_config_mutated:
+                if _saved_optimizer is not None:
+                    _ds_config["optimizer"] = _saved_optimizer
+                if _saved_sched_params is not None:
+                    _ds_config.setdefault("scheduler", {})["params"] = _saved_sched_params
 
         # if full fp16 or bf16 eval is wanted and this ``evaluation`` or ``predict`` isn't called
         # while ``train`` is running, cast it to the right dtype first and then put on device
@@ -2958,6 +3052,8 @@ class Trainer:
                 if has_labels or loss_without_labels:
                     with self.compute_loss_context_manager():
                         num_items_in_batch = self._get_num_items_in_batch([inputs], self.args.device)
+                        if self.args.use_liger_kernel and prediction_loss_only:
+                            inputs = {**inputs, "skip_logits": True}
                         loss, outputs = self.compute_loss(
                             model, inputs, return_outputs=True, num_items_in_batch=num_items_in_batch
                         )
@@ -3459,7 +3555,11 @@ class Trainer:
 
                         if os.path.exists(best_adapter_model_path) or os.path.exists(best_safe_adapter_model_path):
                             try:
-                                model.load_adapter(self.state.best_model_checkpoint, active_adapter)
+                                model.load_adapter(
+                                    self.state.best_model_checkpoint,
+                                    active_adapter,
+                                    torch_device="cpu",
+                                )
                             except RuntimeError as exc:
                                 if model.peft_config[active_adapter].is_prompt_learning:
                                     # for context: https://github.com/huggingface/peft/issues/2256

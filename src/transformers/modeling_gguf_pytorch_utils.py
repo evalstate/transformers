@@ -51,12 +51,50 @@ GGUF_TO_TRANSFORMERS_MAPPING = {
 }
 
 GGUF_SUPPORTED_ARCHITECTURES = list(GGUF_TO_TRANSFORMERS_MAPPING["config"].keys())
+PRISM_Q1_0_G128_NAME = "Q1_0_g128"
+PRISM_Q1_0_G128_VALUE = 41
+PRISM_Q1_0_G128_BLOCK_SIZE = 128
+PRISM_Q1_0_G128_TYPE_SIZE = 18
 
 
 class GGUFTensor(NamedTuple):
     weights: np.ndarray
     name: str
     metadata: dict
+
+
+def _is_prism_q1_0_g128(tensor_type) -> bool:
+    if getattr(tensor_type, "name", None) == PRISM_Q1_0_G128_NAME:
+        return True
+
+    try:
+        return int(tensor_type) == PRISM_Q1_0_G128_VALUE
+    except (TypeError, ValueError):
+        return False
+
+
+def _dequantize_prism_q1_0_g128(data: np.ndarray) -> np.ndarray:
+    rows = np.asarray(data, dtype=np.uint8)
+    if rows.shape[-1] % PRISM_Q1_0_G128_TYPE_SIZE != 0:
+        raise ValueError(
+            f"Prism Q1_0_g128 row byte width must be divisible by 18, got {rows.shape[-1]} for shape {rows.shape}"
+        )
+
+    n_blocks = rows.shape[-1] // PRISM_Q1_0_G128_TYPE_SIZE
+    blocks = rows.reshape(*rows.shape[:-1], n_blocks, PRISM_Q1_0_G128_TYPE_SIZE)
+    scales = np.ascontiguousarray(blocks[..., :2]).view(np.float16).astype(np.float32)[..., 0]
+    sign_bits = np.unpackbits(blocks[..., 2:], axis=-1, bitorder="little")
+    weights = np.where(sign_bits == 1, scales[..., None], -scales[..., None]).astype(np.float32, copy=False)
+    return weights.reshape(*rows.shape[:-1], n_blocks * PRISM_Q1_0_G128_BLOCK_SIZE)
+
+
+def _dequantize_gguf_tensor(data: np.ndarray, tensor_type, dequantize_fn) -> np.ndarray:
+    try:
+        return dequantize_fn(data, tensor_type)
+    except NotImplementedError:
+        if _is_prism_q1_0_g128(tensor_type):
+            return _dequantize_prism_q1_0_g128(data)
+        raise
 
 
 class TensorProcessor:
@@ -453,11 +491,62 @@ class MiniMaxM2TensorProcessor(TensorProcessor):
             out.copy_(torch_weights)
 
 
+class Llama4TensorProcessor(TensorProcessor):
+    HF_MOE_GATE_UP_PATTERN = re.compile(r"(?:model\.)?layers\.(?P<bid>\d+)\.feed_forward\.experts\.gate_up_proj$")
+    HF_MOE_DOWN_PATTERN = re.compile(r"(?:model\.)?layers\.(?P<bid>\d+)\.feed_forward\.experts\.down_proj$")
+    GGUF_MOE_WEIGHTS_PATTERN = re.compile(r".*\.ffn_(?P<w>gate|up|down)_exps\.weight$")
+
+    def __init__(self, config=None):
+        super().__init__(config=config)
+
+    def perform_fallback_tensor_mapping(
+        self, gguf_to_hf_name_map: dict[str, str], suffix: str, qual_name: str, hf_name: str
+    ):
+        if m := re.fullmatch(self.HF_MOE_GATE_UP_PATTERN, hf_name):
+            full_hf_name = qual_name + hf_name
+            gguf_to_hf_name_map[f"blk.{m['bid']}.ffn_gate_exps.weight"] = full_hf_name
+            gguf_to_hf_name_map[f"blk.{m['bid']}.ffn_up_exps.weight"] = full_hf_name
+        elif m := re.fullmatch(self.HF_MOE_DOWN_PATTERN, hf_name):
+            full_hf_name = qual_name + hf_name
+            gguf_to_hf_name_map[f"blk.{m['bid']}.ffn_down_exps.weight"] = full_hf_name
+
+    def process(self, weights, name: str, **kwargs):
+        if m := re.fullmatch(self.GGUF_MOE_WEIGHTS_PATTERN, name):
+            tensor_key_mapping = kwargs.get("tensor_key_mapping")
+            parsed_parameters = kwargs.get("parsed_parameters")
+            if tensor_key_mapping and name in tensor_key_mapping:
+                self._set_moe_expert_tensor(weights, parsed_parameters, tensor_key_mapping[name], m["w"])
+                return GGUFTensor(weights, None, {})
+        return GGUFTensor(weights, name, {})
+
+    def _set_moe_expert_tensor(self, weights: np.ndarray, parsed_parameters: dict[str, dict], hf_name: str, w: str):
+        torch_weights = torch.from_numpy(np.ascontiguousarray(np.swapaxes(weights, -1, -2)))
+        if w == "down":
+            parsed_parameters["tensors"][hf_name] = torch_weights
+            return
+        # Merge gate and up into gate_up_proj: [E, hidden, 2*expert_dim], gate first then up.
+        shape = list(torch_weights.shape)
+        shard_dim = -1
+        shard_size = shape[shard_dim]
+        shape[shard_dim] = shard_size * 2
+        if hf_name not in parsed_parameters["tensors"]:
+            parsed_parameters["tensors"][hf_name] = torch.zeros(shape, dtype=torch_weights.dtype)
+        out: torch.Tensor = parsed_parameters["tensors"][hf_name]
+        if w == "gate":
+            out = out.narrow(shard_dim, 0, shard_size)
+        else:  # w == "up"
+            out = out.narrow(shard_dim, shard_size, shard_size)
+        out.copy_(torch_weights)
+
+
 TENSOR_PROCESSORS = {
     "llama": LlamaTensorProcessor,
+    "llama4": Llama4TensorProcessor,
     "qwen2moe": Qwen2MoeTensorProcessor,
     "gpt_oss": GptOssTensorProcessor,
     "qwen3moe": Qwen2MoeTensorProcessor,
+    # Qwen3.5 MoE reuses the qwen2/qwen3 fused 3-D ffn_*_exps layout.
+    "qwen35moe": Qwen2MoeTensorProcessor,
     "bloom": BloomTensorProcessor,
     "t5": T5TensorProcessor,
     "t5encoder": T5TensorProcessor,
@@ -512,12 +601,18 @@ def get_gguf_hf_weights_map(
         model_type = "qwen2moe"
     elif model_type == "qwen3_moe":
         model_type = "qwen3moe"
+    elif model_type == "qwen3_5_moe_text":
+        model_type = "qwen35moe"
     elif model_type == "gemma3_text":
         model_type = "gemma3"
     elif model_type == "umt5":
         model_type = "t5"
     elif model_type == "minimax_m2":
         model_type = "minimax-m2"
+    elif model_type == "llama4_text":
+        # GGUF Llama 4 files only contain text weights; the text-only config
+        # uses `llama4_text` in transformers but the GGUF arch key is `llama4`.
+        model_type = "llama4"
     elif model_type == "gpt_oss":
         model_type = "gpt-oss"
     arch = None
@@ -630,6 +725,12 @@ def load_gguf_checkpoint(gguf_checkpoint_path, return_tensors=False, model_to_lo
         updated_architecture = "gpt_oss"
     elif "qwen3moe" in architecture:
         updated_architecture = "qwen3_moe"
+    elif "qwen35moe" in architecture:
+        # GGUF identifies Qwen3.5 MoE as "qwen35moe". Route to the
+        # text-only qwen3_5_moe_text config rather than the multimodal
+        # qwen3_5_moe wrapper so Qwen3_5MoeForCausalLM gets the matching
+        # Qwen3_5MoeTextConfig.
+        updated_architecture = "qwen3_5_moe_text"
     elif "minimax-m2" in architecture:
         updated_architecture = "minimax_m2"
 
@@ -695,6 +796,18 @@ def load_gguf_checkpoint(gguf_checkpoint_path, return_tensors=False, model_to_lo
     if parsed_parameters["config"]["model_type"] == "gemma3":
         parsed_parameters["config"]["model_type"] = "gemma3_text"
 
+    # Llama 4 GGUF checkpoints only contain the text backbone. Rewrite the model_type to
+    # the text-only config and nest rope_theta under rope_parameters (Llama4TextConfig is
+    # @strict and stores rope params in a nested dict rather than a top-level field).
+    if parsed_parameters["config"]["model_type"] == "llama4":
+        parsed_parameters["config"]["model_type"] = "llama4_text"
+        rope_theta = parsed_parameters["config"].pop("rope_theta", None)
+        if rope_theta is not None:
+            parsed_parameters["config"]["rope_parameters"] = {
+                "rope_type": "default",
+                "rope_theta": float(rope_theta),
+            }
+
     # MiniMax-M2: convert expert_gating_func integer to scoring_func string
     if parsed_parameters["config"].get("model_type") == "minimax_m2":
         _gating_func_map = {0: "none", 1: "softmax", 2: "sigmoid"}
@@ -714,6 +827,21 @@ def load_gguf_checkpoint(gguf_checkpoint_path, return_tensors=False, model_to_lo
         parsed_parameters["config"]["full_attn_idxs"] = [
             i for i, num_kv_heads in enumerate(gguf_num_key_value_heads) if num_kv_heads > 0
         ]
+
+    if updated_architecture == "qwen3_5_moe_text":
+        # GatedDeltaNet's value head dim isn't emitted as its own GGUF key —
+        # the writer only emits ssm.inner_size (= linear_value_head_dim *
+        # linear_num_value_heads). Recover it here so the config matches the
+        # checkpoint instead of silently falling back to the class default.
+        ssm_inner_key = f"{architecture}.ssm.inner_size"
+        n_v_heads = parsed_parameters["config"].get("linear_num_value_heads")
+        if ssm_inner_key in reader.fields and n_v_heads:
+            ssm_inner = _gguf_parse_value(
+                reader.fields[ssm_inner_key].parts[reader.fields[ssm_inner_key].data[0]],
+                reader.fields[ssm_inner_key].types,
+            )
+            if ssm_inner % n_v_heads == 0:
+                parsed_parameters["config"]["linear_value_head_dim"] = ssm_inner // n_v_heads
 
     if updated_architecture == "gpt_oss":
         # Helper to read keys with the correct prefix
@@ -778,7 +906,7 @@ def load_gguf_checkpoint(gguf_checkpoint_path, return_tensors=False, model_to_lo
 
         for tensor in tqdm(reader.tensors, desc="Converting and de-quantizing GGUF tensors..."):
             name = tensor.name
-            weights = dequantize(tensor.data, tensor.tensor_type)
+            weights = _dequantize_gguf_tensor(tensor.data, tensor.tensor_type, dequantize)
 
             result = processor.process(
                 weights=weights,

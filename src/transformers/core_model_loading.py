@@ -156,8 +156,11 @@ class Concatenate(ConversionOps):
         target_pattern = self.get_target_pattern(target_patterns)
         all_tensors = []
         # Very important to keep the relative order of the source patterns here, so we iterate over them not the
-        # input directly as it's unordered!
+        # input directly as it's unordered! Skip patterns that prior ops in the chain (e.g. ``Fp8Dequantize``)
+        # have already consumed and dropped from ``input_dict``.
         for source_pattern in source_patterns:
+            if source_pattern not in input_dict:
+                continue
             tensors = input_dict[source_pattern]
             if isinstance(tensors, list):
                 all_tensors.extend(tensors)
@@ -583,7 +586,8 @@ class WeightTransform:
     __slots__ = (
         "source_patterns",
         "target_patterns",
-        "compiled_sources",
+        "_source_regex_str",
+        "_compiled_sources",
         "distributed_operation",
         "quantization_operation",
         "collected_tensors",
@@ -591,6 +595,7 @@ class WeightTransform:
         "_original_source_patterns",
         "_original_target_patterns",
         "_was_used",
+        "scope_prefix",
     )
 
     def __init__(self, source_patterns: str | list[str], target_patterns: str | list[str]):
@@ -608,6 +613,9 @@ class WeightTransform:
 
         # Flag to notice if the Transform was used
         self._was_used = False
+        # Optional prefix scope: when set, this transform only applies to keys starting with
+        # ``scope_prefix + "."``, stripping / re-attaching the prefix around the pattern match.
+        self.scope_prefix: str | None = None
 
         # We need to process a few exceptions here when instantiating the reverse mapping (i.e. the targets become
         # sources, and sources become targets). The issues lie in the sources usually, so here we need to check the
@@ -647,13 +655,40 @@ class WeightTransform:
                 pattern = process_source_pattern(pattern, self._original_target_patterns[i])
             self.source_patterns[i] = pattern
 
-        # Construct the regex we will use to rename keys from the sources to the targets
+        # Build the regex source string, but compile lazily via `compiled_sources` below. During loading, any key
+        # that does not match a weight conversion op gets wrapped in a fresh per-weight `WeightRenaming` for
+        # convenience so it can reuse the same conversion/loading path. Those fallback wrappers never need to call
+        # `rename_source_key`, so eagerly compiling their regex would just waste work — and it dominates
+        # `from_pretrained` for models with many parameters.
         branches = []
         for i, source_pattern in enumerate(self.source_patterns):
             group_name = f"g{i}"
             pattern = source_pattern.replace(".*.", r"\..*\.")
             branches.append(f"(?P<{group_name}>{pattern})")
-        self.compiled_sources = re.compile("|".join(branches))
+        self._source_regex_str = "|".join(branches)
+        self._compiled_sources = None
+
+    @property
+    def compiled_sources(self) -> re.Pattern:
+        if self._compiled_sources is None:
+            self._compiled_sources = re.compile(self._source_regex_str)
+        return self._compiled_sources
+
+    def __deepcopy__(self, memo):
+        # A fresh-per-target copy is needed because `collected_tensors`, `layer_targets`, and `_was_used` accumulate
+        # state during loading. The compiled regex is stateless, so we share it across copies — avoiding a hidden
+        # `re.compile` that would otherwise run on every per-weight pickle/unpickle round-trip.
+        cls = self.__class__
+        new = cls.__new__(cls)
+        memo[id(self)] = new
+        for slot in chain.from_iterable(getattr(c, "__slots__", ()) for c in cls.__mro__):
+            if not hasattr(self, slot):
+                continue
+            if slot == "_compiled_sources":
+                new._compiled_sources = self._compiled_sources
+            else:
+                object.__setattr__(new, slot, deepcopy(getattr(self, slot), memo))
+        return new
 
     def __repr__(self):
         return f"{self.__class__.__name__}(source_patterns={self.source_patterns}, target_patterns={self.target_patterns})"
@@ -673,6 +708,27 @@ class WeightTransform:
         self.collected_tensors[source_pattern].append(future)
         self.layer_targets[target_key].add(source_key)
 
+    def _scoped_match(self, source_key: str) -> tuple[str | None, str, re.Match[str]] | None:
+        """
+        Apply ``scope_prefix`` stripping (if any), then match ``compiled_sources`` against the suffix.
+
+        Returns ``(prefix_dot, key_to_match, match_object)`` when a branch matches, where ``prefix_dot`` is ``None``
+        if ``scope_prefix`` is unset, else ``f"{scope_prefix}."``. Returns ``None`` when out of scope or unmatched.
+        Does not set ``_was_used``.
+        """
+        prefix_dot = None
+        key_to_match = source_key
+        if self.scope_prefix is not None:
+            prefix_dot = self.scope_prefix + "."
+            if not source_key.startswith(prefix_dot):
+                return None
+            key_to_match = source_key[len(prefix_dot) :]
+
+        match_object = self.compiled_sources.search(key_to_match)
+        if match_object is None:
+            return None
+        return (prefix_dot, key_to_match, match_object)
+
     def rename_source_key(self, source_key: str) -> tuple[str, str | None]:
         """
         Return a tuple (renamed_key, source_pattern_producing_the_match).
@@ -680,10 +736,11 @@ class WeightTransform:
         In case of a one-to-many transform, i.e. we have several target patterns, the matching source pattern
         will be replaced by the first of all the target patterns (they are then correctly expanded in the Operations).
         """
-        # Try matching one of the alternation branches
-        match_object = self.compiled_sources.search(source_key)
-        if match_object is None:
+        matched = self._scoped_match(source_key)
+        if matched is None:
             return source_key, None
+
+        prefix_dot, key_to_match, match_object = matched
 
         # We have a match, so the Transform was used
         self._was_used = True
@@ -699,7 +756,9 @@ class WeightTransform:
             # inside that matched named group
             replaced_group_idx = self.compiled_sources.groupindex[matching_group_name] + 1
             replacement = replacement.replace(r"\1", match_object.group(replaced_group_idx))
-        renamed_key = source_key.replace(match_object.group(0), replacement, 1)
+        renamed_key = key_to_match.replace(match_object.group(0), replacement, 1)
+        if prefix_dot is not None:
+            renamed_key = prefix_dot + renamed_key
         return renamed_key, source_pattern_that_matched
 
     def reverse_transform(self) -> WeightTransform:
@@ -717,7 +776,7 @@ class WeightTransform:
         reverse_transform = self.__class__(
             source_patterns=self._original_target_patterns, target_patterns=self._original_source_patterns, **kwargs
         )
-
+        reverse_transform.scope_prefix = self.scope_prefix
         return reverse_transform
 
     def materialize_tensors(self) -> dict[str, list[torch.Tensor]]:
@@ -735,14 +794,13 @@ class WeightTransform:
         for key in list(self.collected_tensors.keys()):
             # Remove from internal attribute
             tensors = self.collected_tensors.pop(key)
-            # Async loading
-            if isinstance(tensors[0], Future):
-                tensors = [future.result() for future in tensors if future.result() is not None]
-            # Sync loading
-            elif callable(tensors[0]):
-                tensors = [func() for func in tensors]
+            resolved_tensors = []
+            for tensor_or_future in tensors:
+                resolved_tensor = _resolve_pending_tensor(tensor_or_future)
+                if resolved_tensor is not None:
+                    resolved_tensors.append(resolved_tensor)
             # Add them to the new dictionary
-            collected_tensors[key] = tensors
+            collected_tensors[key] = resolved_tensors
 
         return collected_tensors
 
@@ -836,15 +894,11 @@ class PrefixChange(WeightRenaming):
             raise ValueError("Cannot reverse the transform with TP or quantization")
 
         # Only one of the 2 can ever be used, so 1 is always None
-        return PrefixChange(
+        result = PrefixChange(
             prefix_to_add=self.prefix_to_remove, prefix_to_remove=self.prefix_to_add, model_prefix=self.model_prefix
         )
-
-    def with_submodel_prefix(self, prefix: str) -> PrefixChange:
-        new_prefix = f"{prefix}.{self.model_prefix}" if self.model_prefix != "" else prefix
-        return PrefixChange(
-            prefix_to_add=self.prefix_to_add, prefix_to_remove=self.prefix_to_remove, model_prefix=new_prefix
-        )
+        result.scope_prefix = self.scope_prefix
+        return result
 
 
 # List of classes that are known to be able to use m:n
@@ -931,6 +985,15 @@ class WeightConverter(WeightTransform):
 # Having too many is actually harming performances quite a lot, i.e. using 16 can sometimes lead to taking TWICE
 # as much time to load the same model
 GLOBAL_WORKERS = min(4, os.cpu_count() or 4)
+
+
+def _resolve_pending_tensor(tensor_or_future: Future | Callable | torch.Tensor) -> torch.Tensor | None:
+    if isinstance(tensor_or_future, Future):
+        return tensor_or_future.result()
+    elif callable(tensor_or_future):
+        return tensor_or_future()
+    else:
+        return tensor_or_future
 
 
 def _materialize_copy(tensor: torch.Tensor, device=None, dtype=None) -> torch.Tensor:
@@ -1048,9 +1111,16 @@ def set_param_for_module(
     loading_info: LoadStateDictInfo,
     distributed_operation: TensorParallelLayer | None,
     hf_quantizer: HfQuantizer,
+    module_cache: dict[str, torch.nn.Module] | None = None,
 ):
     module_path, _, param_name = target_name.rpartition(".")
-    module_obj = model.get_submodule(module_path) if module_path else model
+    if module_cache is not None:
+        module_obj = module_cache.get(module_path)
+        if module_obj is None:
+            module_obj = model.get_submodule(module_path) if module_path else model
+            module_cache[module_path] = module_obj
+    else:
+        module_obj = model.get_submodule(module_path) if module_path else model
 
     if param_name == torch.nn.modules.module._EXTRA_STATE_KEY_SUFFIX:
         module_obj.set_extra_state(param_value)
@@ -1077,6 +1147,8 @@ def set_param_for_module(
         if ref is not None and param_value.shape != expected_shape and hf_quantizer is None:
             loading_info.mismatched_keys.add((target_name, param_value.shape, expected_shape))
         else:
+            if distributed_operation is not None:
+                param_value = distributed_operation.post_shard_wrap(param_value)
             # super important otherwise _init_weight will re-init the param
             param_value._is_hf_initialized = True
             setattr(module_obj, param_name, param_value)
@@ -1088,7 +1160,7 @@ def offload_and_maybe_resave_param(
     target_name: str,
     param: torch.Tensor,
     loading_info: LoadStateDictInfo,
-    disk_offload_folder: str,
+    disk_offload_folder: str | None,
     disk_offload_index: dict,
     applied_ops: WeightConverter | WeightRenaming,
 ) -> dict:
@@ -1112,40 +1184,100 @@ class SkipParameters(Exception):
 
 def rename_source_key(
     source_key: str,
-    weight_renamings: list[WeightRenaming],
-    weight_converters: list[WeightConverter],
+    weight_transforms: list[WeightTransform],
     prefix: str | None = None,
     meta_state_dict: dict | None = None,
 ) -> tuple[str, str | None]:
     """
-    Rename a source key given all the renaming and weight conversion patterns we have. Also takes care of adding/removing
-    the base model prefix during loading if necessary.
+    Rename a source key according to ``weight_transforms``, also handling the base model prefix.
+
+    Transforms are applied in list order, interleaving ``WeightRenaming`` and ``WeightConverter``
+    instances as they appear.  The same list, reversed and with each transform individually
+    inverted, is used on the save path, so relative ordering is preserved in both directions.
+
+    At most one ``WeightConverter`` fires per key; subsequent converters are skipped.
+    ``WeightRenaming`` always runs, even after a converter has already fired.
+
+    Example (root rename followed by a scoped sub-model converter)::
+
+        transforms = [
+            WeightRenaming("^old_prefix", "model.vlm"),
+            WeightConverter("^q_proj", "qkv_proj", ...),  # scope_prefix="model.vlm"
+        ]
+        # Load:  "old_prefix.q_proj"
+        #   → WeightRenaming  → "model.vlm.q_proj"
+        #   → WeightConverter → "model.vlm.qkv_proj"
+        #
+        # Save (inverted list, each transform reversed):
+        #   "model.vlm.q_proj"
+        #   → rev(WeightConverter) → "model.vlm.q_proj"
+        #   → rev(WeightRenaming)  → "old_prefix.q_proj"
     """
     renamed_key = source_key
-    # 1. apply all renamings in turns (if multiple match, it's the responsibility of the mappings to make sure they
-    # are coherent)
-    for renaming in weight_renamings:
-        renamed_key, _ = renaming.rename_source_key(renamed_key)
-
-    # 2. apply renaming through weight conversions on the key if we have any WeightConverter (here we stop after
-    # the first match, as we assume only 1 converter can match any source key)
     source_pattern = None
-    for converter in weight_converters:
-        renamed_key, source_pattern = converter.rename_source_key(renamed_key)
-        if source_pattern is not None:
-            break
 
-    # 3. check if we need to add or remove prefix if necessary (only during loading, not saving)
-    if prefix is not None and meta_state_dict is not None:
-        if (
-            renamed_key.startswith(prefix)
-            and meta_state_dict.get(re.sub(f"^{prefix}.", "", renamed_key, count=1)) is not None
-        ):
-            renamed_key = re.sub(f"^{prefix}.", "", renamed_key, count=1)
-        elif meta_state_dict.get(f"{prefix}.{renamed_key}") is not None:
-            renamed_key = f"{prefix}.{renamed_key}"
+    for transform in weight_transforms:
+        if isinstance(transform, WeightConverter):
+            if source_pattern is not None:
+                # Already matched a converter; skip subsequent converters.
+                continue
+            renamed_key, sp = transform.rename_source_key(renamed_key)
+            if sp is not None:
+                source_pattern = sp
+        else:
+            renamed_key, _ = transform.rename_source_key(renamed_key)
+
+    # check if we need to add or remove prefix if necessary (only during loading, not saving)
+    if prefix not in (None, "") and meta_state_dict is not None:
+        prefixed_key = f"{prefix}.{renamed_key}"
+        prefix_with_separator = f"{prefix}."
+        if renamed_key.startswith(prefix_with_separator):
+            unprefixed_key = renamed_key[len(prefix_with_separator) :]
+            if meta_state_dict.get(unprefixed_key) is not None:
+                renamed_key = unprefixed_key
+        elif meta_state_dict.get(prefixed_key) is not None:
+            renamed_key = prefixed_key
 
     return renamed_key, source_pattern
+
+
+def _assign_or_offload_param(
+    model: PreTrainedModel,
+    target_name: str,
+    param: torch.Tensor,
+    loading_info: LoadStateDictInfo,
+    device_map: dict | None,
+    model_buffers: set[str],
+    offload_buffers: bool,
+    disk_offload_folder: str | None,
+    disk_offload_index: dict | None,
+    distributed_operation: TensorParallelLayer | None,
+    hf_quantizer: HfQuantizer | None,
+    module_cache: dict[str, torch.nn.Module],
+    applied_ops: WeightConverter | WeightRenaming | None = None,
+) -> dict | None:
+    param_device = get_device(device_map, target_name)
+    if param_device == "disk" and (target_name not in model_buffers or offload_buffers):
+        current_disk_offload_index = {} if disk_offload_index is None else disk_offload_index
+        if applied_ops is None:
+            loading_info.missing_keys.discard(target_name)
+            if target_name not in current_disk_offload_index:
+                return offload_weight(param, target_name, disk_offload_folder, current_disk_offload_index)
+        else:
+            return offload_and_maybe_resave_param(
+                target_name, param, loading_info, disk_offload_folder, current_disk_offload_index, applied_ops
+            )
+    else:
+        set_param_for_module(
+            model,
+            target_name,
+            param,
+            loading_info,
+            distributed_operation,
+            hf_quantizer,
+            module_cache=module_cache,
+        )
+    return disk_offload_index
 
 
 def convert_and_load_state_dict_in_model(
@@ -1277,9 +1409,10 @@ def convert_and_load_state_dict_in_model(
     else:
         thread_pool = ThreadPoolExecutor(max_workers=GLOBAL_WORKERS)
 
-    renamings = [entry for entry in weight_mapping if isinstance(entry, WeightRenaming)]
     converters = [entry for entry in weight_mapping if isinstance(entry, WeightConverter)]
+    direct_param_loads: list[tuple[str, Future | Callable | torch.Tensor, TensorParallelLayer | None]] = []
     param_name_to_load: dict[str, WeightRenaming | WeightConverter] = {}
+    module_cache: dict[str, torch.nn.Module] = {"": model}
 
     # build '(?P<g0>.*.*\\.block_sparse_moe\\..*)' and group to source {'g0': '*.block_sparse_moe.'}
     # and target to source {'g0': '*.mlp.'}. This allows us to quickly find which pattern matched.
@@ -1292,26 +1425,15 @@ def convert_and_load_state_dict_in_model(
 
     state_dict = sorted(state_dict.items(), key=lambda kv: dot_natural_key(kv[0]))
     for original_key, tensor in state_dict:
-        # 1. Rename the key according to all renaming pattern and optional weight converter patterns
-        renamed_key, source_pattern = rename_source_key(
-            original_key, renamings, converters, prefix, meta_model_state_dict
-        )
+        # 1. Rename the key according to all renaming and weight conversion patterns.
+        renamed_key, source_pattern = rename_source_key(original_key, weight_mapping, prefix, meta_model_state_dict)
         if renamed_key not in meta_model_state_dict and original_key in meta_model_state_dict:
-            # Key should probably not have been renamed but we might need the `prefix` to be added.`
-            renamed_key, source_pattern = rename_source_key(original_key, [], [], prefix, meta_model_state_dict)
+            # Key should probably not have been renamed but we might need the `prefix` to be added.
+            renamed_key, source_pattern = rename_source_key(original_key, [], prefix, meta_model_state_dict)
 
         # 2. finally, collect the tensor into the proper converter
         if renamed_key in meta_model_state_dict:
             empty_param = meta_model_state_dict.get(renamed_key)
-            # If we enter here, we have a WeightConverter operation to perform
-            if source_pattern is not None:
-                new_converter = deepcopy(pattern_to_converter[source_pattern])
-                # each target key gets its own converter instance
-                mapping = param_name_to_load.setdefault(renamed_key, new_converter)
-            # Otherwise, only potential renaming
-            else:
-                mapping = param_name_to_load.setdefault(renamed_key, WeightRenaming(original_key, renamed_key))
-                source_pattern = original_key
 
             # 3. Handle dtype casting
             needs_quantization = (
@@ -1319,6 +1441,21 @@ def convert_and_load_state_dict_in_model(
                 and not hf_quantizer.pre_quantized
                 and hf_quantizer.param_needs_quantization(model, renamed_key)
             )
+            mapping = None
+            if source_pattern is not None:
+                # each target key gets its own converter instance (deepcopy is lazy: skipped if target already seen,
+                # e.g. many-to-one/one-to-many converters where several sources land on the same target)
+                mapping = param_name_to_load.get(renamed_key)
+                if mapping is None:
+                    mapping = deepcopy(pattern_to_converter[source_pattern])
+                    param_name_to_load[renamed_key] = mapping
+            elif needs_quantization:
+                mapping = param_name_to_load.get(renamed_key)
+                if mapping is None:
+                    mapping = WeightRenaming(original_key, renamed_key)
+                    param_name_to_load[renamed_key] = mapping
+                source_pattern = original_key
+
             if needs_quantization:
                 mapping.quantization_operation = hf_quantizer.get_quantize_ops()
 
@@ -1348,14 +1485,24 @@ def convert_and_load_state_dict_in_model(
 
             # 4. Handle TP sharding or device_map placement
             future_or_tensor = None
+            distributed_operation = None
             if device_mesh and tp_plan:
                 if matched_tp_pattern := tp_plan_alt.search(renamed_key):
                     matched_tp_pattern = tp_plan_by_group_name[matched_tp_pattern.lastgroup]
-                    if getattr(mapping, "distributed_operation", None) is None:
-                        tp_layer = ALL_PARALLEL_STYLES[model.tp_plan[matched_tp_pattern]].__class__
-                        mapping.distributed_operation = tp_layer(
+                    tp_layer = ALL_PARALLEL_STYLES[model.tp_plan[matched_tp_pattern]].__class__
+                    if mapping is None:
+                        distributed_operation = tp_layer(
                             device_mesh=device_mesh, rank=device_mesh.get_local_rank(), empty_param=empty_param.clone()
                         )
+                    else:
+                        distributed_operation = getattr(mapping, "distributed_operation", None)
+                        if distributed_operation is None:
+                            distributed_operation = tp_layer(
+                                device_mesh=device_mesh,
+                                rank=device_mesh.get_local_rank(),
+                                empty_param=empty_param.clone(),
+                            )
+                            mapping.distributed_operation = distributed_operation
                     shard_index = (
                         len(mapping.collected_tensors.get(source_pattern, []))
                         if isinstance(mapping, WeightConverter) and isinstance(mapping.operations[0], MergeModulelist)
@@ -1364,7 +1511,7 @@ def convert_and_load_state_dict_in_model(
                     future_or_tensor = spawn_tp_materialize(
                         thread_pool,
                         tensor,
-                        mapping.distributed_operation,
+                        distributed_operation,
                         shard_index,
                         device_map[""],
                         _dtype,
@@ -1374,7 +1521,12 @@ def convert_and_load_state_dict_in_model(
                 param_device = get_device(device_map, renamed_key, valid_torch_device=True)
                 future_or_tensor = spawn_materialize(thread_pool, tensor, param_device, _dtype)
 
-            mapping.add_tensor(renamed_key, original_key, source_pattern, future_or_tensor)
+            if mapping is None:
+                # Fast path for untouched or purely renamed parameters: avoid instantiating a per-weight
+                # `WeightRenaming` wrapper when we can load the tensor directly.
+                direct_param_loads.append((renamed_key, future_or_tensor, distributed_operation))
+            else:
+                mapping.add_tensor(renamed_key, original_key, source_pattern, future_or_tensor)
         elif source_pattern is not None:  # add all target keys as unexpected
             mapping = pattern_to_converter[source_pattern]
             for k in mapping.target_patterns:
@@ -1383,38 +1535,63 @@ def convert_and_load_state_dict_in_model(
             loading_info.unexpected_keys.add(renamed_key)
 
     try:
-        for first_param_name, mapping in tqdm(param_name_to_load.items(), desc="Loading weights"):
-            try:
-                realized_value = mapping.convert(
-                    first_param_name,
-                    model=model,
-                    config=model.config,
-                    hf_quantizer=hf_quantizer,
-                    loading_info=loading_info,
-                )
-                for target_name, param in realized_value.items():
-                    param = param[0] if isinstance(param, list) else param
-                    param_device = get_device(device_map, target_name)
-                    # Offloading support
-                    if param_device == "disk" and (target_name not in model_buffers or offload_buffers):
-                        disk_offload_index = offload_and_maybe_resave_param(
-                            target_name, param, loading_info, disk_offload_folder, disk_offload_index, mapping
-                        )
-                    else:
-                        set_param_for_module(
+        with tqdm(total=len(direct_param_loads) + len(param_name_to_load), desc="Loading weights") as progress_bar:
+            for target_name, pending_param, distributed_operation in direct_param_loads:
+                try:
+                    param = _resolve_pending_tensor(pending_param)
+                    if param is None:
+                        continue
+                    disk_offload_index = _assign_or_offload_param(
+                        model,
+                        target_name,
+                        param,
+                        loading_info,
+                        device_map,
+                        model_buffers,
+                        offload_buffers,
+                        disk_offload_folder,
+                        disk_offload_index,
+                        distributed_operation,
+                        hf_quantizer,
+                        module_cache,
+                    )
+                finally:
+                    progress_bar.update()
+
+            for first_param_name, mapping in param_name_to_load.items():
+                try:
+                    realized_value = mapping.convert(
+                        first_param_name,
+                        model=model,
+                        config=model.config,
+                        hf_quantizer=hf_quantizer,
+                        loading_info=loading_info,
+                    )
+                    for target_name, param in realized_value.items():
+                        param = param[0] if isinstance(param, list) else param
+                        disk_offload_index = _assign_or_offload_param(
                             model,
                             target_name,
                             param,
                             loading_info,
+                            device_map,
+                            model_buffers,
+                            offload_buffers,
+                            disk_offload_folder,
+                            disk_offload_index,
                             mapping.distributed_operation,
                             hf_quantizer,
+                            module_cache,
+                            mapping,
                         )
 
-                # Cleanup all the tensors that were gathered before next iteration
-                del realized_value
+                    # Cleanup all the tensors that were gathered before next iteration
+                    del realized_value
 
-            except SkipParameters:
-                continue
+                except SkipParameters:
+                    continue
+                finally:
+                    progress_bar.update()
 
     # Close the pool, independently of whether the code was interrupted or finished successfully
     finally:
@@ -1460,15 +1637,14 @@ def revert_weight_conversion(model: PreTrainedModel, state_dict: dict[str, torch
     # Reverse all Transform to correctly match keys
     reverse_weight_conversion = [conversion.reverse_transform() for conversion in weight_conversions]
     # If we are still here, we need to create the (reverse) conversion mapping from scratch
-    renamings = [entry for entry in reverse_weight_conversion if isinstance(entry, WeightRenaming)]
     converters = [entry for entry in reverse_weight_conversion if isinstance(entry, WeightConverter)]
     pattern_to_converter = {k: converter for converter in converters for k in converter.source_patterns}
     conversion_mapping = {}
 
     state_dict = sorted(state_dict.items(), key=lambda kv: dot_natural_key(kv[0]))
     for original_key, tensor in state_dict:
-        # Rename the key according to all renaming pattern and optional weight converter patterns
-        renamed_key, source_pattern = rename_source_key(original_key, renamings, converters)
+        renamed_key, source_pattern = rename_source_key(original_key, reverse_weight_conversion)
+
         if source_pattern is not None:
             new_converter = deepcopy(pattern_to_converter[source_pattern])
             # each target key gets its own converter instance

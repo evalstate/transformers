@@ -517,7 +517,12 @@ class ChineseCLIPPreTrainedModel(PreTrainedModel):
     config: ChineseCLIPConfig
     base_model_prefix = "chinese_clip"
     input_modalities = ("image", "text")
-    _no_split_modules = ["ChineseCLIPVisionEmbeddings", "ChineseCLIPTextEmbeddings", "ChineseCLIPVisionAttention"]
+    _no_split_modules = [
+        "ChineseCLIPVisionEmbeddings",
+        "ChineseCLIPTextEmbeddings",
+        "ChineseCLIPTextLayer",
+        "ChineseCLIPVisionAttention",
+    ]
 
     supports_gradient_checkpointing = True
     _supports_sdpa = True
@@ -653,7 +658,7 @@ class ChineseCLIPVisionModel(ChineseCLIPPreTrainedModel):
         embed_dim = config.hidden_size
 
         self.embeddings = ChineseCLIPVisionEmbeddings(config)
-        self.pre_layrnorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
+        self.pre_layernorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
         self.encoder = ChineseCLIPVisionEncoder(config)
         self.post_layernorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
         self.post_init()
@@ -690,7 +695,7 @@ class ChineseCLIPVisionModel(ChineseCLIPPreTrainedModel):
         >>> pooled_output = outputs.pooler_output  # pooled CLS states
         ```"""
         hidden_states = self.embeddings(pixel_values, interpolate_pos_encoding=interpolate_pos_encoding)
-        hidden_states = self.pre_layrnorm(hidden_states)
+        hidden_states = self.pre_layernorm(hidden_states)
 
         encoder_outputs: BaseModelOutput = self.encoder(
             inputs_embeds=hidden_states,

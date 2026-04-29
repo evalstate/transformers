@@ -125,7 +125,7 @@ class AltRobertaEmbeddings(nn.Module):
         if token_type_ids is None:
             if hasattr(self, "token_type_ids"):
                 # NOTE: We assume either pos ids to have bsz == 1 (broadcastable) or bsz == effective bsz (input_shape[0])
-                buffered_token_type_ids = self.token_type_ids.expand(position_ids.shape[0], -1)
+                buffered_token_type_ids = self.token_type_ids.to(position_ids.device).expand(position_ids.shape[0], -1)
                 buffered_token_type_ids = torch.gather(buffered_token_type_ids, dim=1, index=position_ids)
                 token_type_ids = buffered_token_type_ids.expand(batch_size, seq_length)
             else:
@@ -630,7 +630,7 @@ class AltCLIPPreTrainedModel(PreTrainedModel):
     config: AltCLIPConfig
     base_model_prefix = "altclip"
     input_modalities = ("image", "text")
-    _no_split_modules = ["AltCLIPTextEmbeddings", "AltCLIPEncoderLayer", "AltCLIPVisionEmbeddings"]
+    _no_split_modules = ["AltRobertaEmbeddings", "AltRobertaLayer", "AltCLIPEncoderLayer", "AltCLIPVisionEmbeddings"]
 
     supports_gradient_checkpointing = True
     _supports_sdpa = True
@@ -705,7 +705,7 @@ class AltCLIPVisionModel(AltCLIPPreTrainedModel):
         embed_dim = config.hidden_size
 
         self.embeddings = AltCLIPVisionEmbeddings(config)
-        self.pre_layrnorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
+        self.pre_layernorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
         self.encoder = AltCLIPEncoder(config)
         self.post_layernorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
         self.post_init()
@@ -742,7 +742,7 @@ class AltCLIPVisionModel(AltCLIPPreTrainedModel):
         >>> pooled_output = outputs.pooler_output  # pooled CLS states
         ```"""
         hidden_states = self.embeddings(pixel_values, interpolate_pos_encoding=interpolate_pos_encoding)
-        hidden_states = self.pre_layrnorm(hidden_states)
+        hidden_states = self.pre_layernorm(hidden_states)
 
         encoder_outputs: BaseModelOutput = self.encoder(
             inputs_embeds=hidden_states,

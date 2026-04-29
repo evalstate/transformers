@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import unittest
 
 import pytest
@@ -110,8 +111,8 @@ class Phi4MultimodalModelTester:
         self.eos_token_id = eos_token_id
         self.image_token_id = image_token_id
         self.audio_token_id = audio_token_id
-        self.audio_config = audio_config
-        self.vision_config = vision_config
+        self.audio_config = copy.deepcopy(audio_config)
+        self.vision_config = copy.deepcopy(vision_config)
 
         self.is_training = is_training
         self.batch_size = batch_size
@@ -276,13 +277,13 @@ class Phi4MultimodalModelTest(ModelTesterMixin, GenerationTesterMixin, unittest.
 @slow
 class Phi4MultimodalIntegrationTest(unittest.TestCase):
     checkpoint_path = "microsoft/Phi-4-multimodal-instruct"
-    revision = "refs/pr/70"
+    revision = "refs/pr/94"
     image_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/australia.jpg"
     audio_url = "https://huggingface.co/datasets/raushan-testing-hf/audio-test/resolve/main/f2641_0_throatclearing.wav"
 
     def setUp(self):
         # Currently, the Phi-4 checkpoint on the hub is not working with the latest Phi-4 code, so the slow integration tests
-        # won't pass without using the correct revision (refs/pr/70)
+        # won't pass without using the correct revision (refs/pr/94)
         self.processor = AutoProcessor.from_pretrained(self.checkpoint_path, revision=self.revision)
         self.generation_config = GenerationConfig(max_new_tokens=20, do_sample=False)
         self.user_token = "<|user|>"

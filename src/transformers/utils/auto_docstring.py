@@ -43,13 +43,17 @@ AUTODOC_FILES = [
     "image_processing_pil_*.py",
     "image_processing_*.py",
     "feature_extractor_*.py",
+    "modular_*.py",
 ]
 
 PLACEHOLDER_TO_AUTO_MODULE = {
     "image_processor_class": ("image_processing_auto", "IMAGE_PROCESSOR_MAPPING_NAMES"),
     "tokenizer_class": ("tokenization_auto", "TOKENIZER_MAPPING_NAMES"),
     "video_processor_class": ("video_processing_auto", "VIDEO_PROCESSOR_MAPPING_NAMES"),
-    "feature_extractor_class": ("feature_extraction_auto", "FEATURE_EXTRACTOR_MAPPING_NAMES"),
+    "feature_extractor_class": (
+        "feature_extraction_auto",
+        "FEATURE_EXTRACTOR_MAPPING_NAMES",
+    ),
     "processor_class": ("processing_auto", "PROCESSOR_MAPPING_NAMES"),
     "config_class": ("configuration_auto", "CONFIG_MAPPING_NAMES"),
     "model_class": ("modeling_auto", "MODEL_MAPPING_NAMES"),
@@ -2732,7 +2736,9 @@ def get_model_name(obj):
             model_name_lowercase_from_file = file_name[len(start) : -len(end)]
             break
     if model_name_lowercase_from_file and model_name_lowercase_from_folder != model_name_lowercase_from_file:
-        from transformers.models.auto.configuration_auto import SPECIAL_MODEL_TYPE_TO_MODULE_NAME
+        from transformers.models.auto.configuration_auto import (
+            SPECIAL_MODEL_TYPE_TO_MODULE_NAME,
+        )
 
         if (
             model_name_lowercase_from_file in SPECIAL_MODEL_TYPE_TO_MODULE_NAME
@@ -3242,7 +3248,14 @@ def _get_parameter_info(param_name, documented_params, source_args_dict, param_t
         # Parameter is not documented
         is_documented = False
 
-    return param_type, optional_string, shape_string, additional_info, description, is_documented
+    return (
+        param_type,
+        optional_string,
+        shape_string,
+        additional_info,
+        description,
+        is_documented,
+    )
 
 
 def _process_regular_parameters(
@@ -3307,9 +3320,14 @@ def _process_regular_parameters(
         if param.default != inspect._empty and param.default is not None:
             param_default = f", defaults to `{str(param.default)}`"
 
-        param_type, optional_string, shape_string, additional_info, description, is_documented = _get_parameter_info(
-            param_name, documented_params, source_args_dict, param_type, optional
-        )
+        (
+            param_type,
+            optional_string,
+            shape_string,
+            additional_info,
+            description,
+            is_documented,
+        ) = _get_parameter_info(param_name, documented_params, source_args_dict, param_type, optional)
 
         if is_documented:
             if param_name == "config":
@@ -3336,7 +3354,7 @@ def _process_regular_parameters(
                 "type": param_type if param_type else "<fill_type>",
                 "optional": optional,
                 "shape": shape_string,
-                "description": description if description else "\n    <fill_description>",
+                "description": (description if description else "\n    <fill_description>"),
                 "default": param_default,
             }
             # Try to get the correct source file; for classes decorated with @strict (huggingface_hub),
@@ -3629,7 +3647,10 @@ def _process_kwargs_parameters(sig, func, parent_class, documented_kwargs, inden
                             continue
 
                         # Process each field in the custom typed kwargs
-                        for nested_param_name, nested_param_type in actual_type.__annotations__.items():
+                        for (
+                            nested_param_name,
+                            nested_param_type,
+                        ) in actual_type.__annotations__.items():
                             # Only document parameters that are explicitly documented in the TypedDict's docstring
                             if nested_param_name not in documented_nested_kwargs:
                                 continue
@@ -3699,8 +3720,19 @@ def _process_kwargs_parameters(sig, func, parent_class, documented_kwargs, inden
                     param_default = str(getattr(parent_class, param_name, ""))
                     param_default = f", defaults to `{param_default}`" if param_default != "" else ""
 
-                param_type, optional_string, shape_string, additional_info, description, is_documented = (
-                    _get_parameter_info(param_name, documented_kwargs, source_args_dict, param_type, optional)
+                (
+                    param_type,
+                    optional_string,
+                    shape_string,
+                    additional_info,
+                    description,
+                    is_documented,
+                ) = _get_parameter_info(
+                    param_name,
+                    documented_kwargs,
+                    source_args_dict,
+                    param_type,
+                    optional,
                 )
 
                 if is_documented:
@@ -3836,7 +3868,12 @@ def _process_parameters_section(
 
     # Process **kwargs parameters if needed
     kwargs_docstring, kwargs_summary = _process_kwargs_parameters(
-        sig, func, parent_class, documented_kwargs, indent_level, undocumented_parameters
+        sig,
+        func,
+        parent_class,
+        documented_kwargs,
+        indent_level,
+        undocumented_parameters,
     )
     docstring += kwargs_docstring
 
@@ -4001,7 +4038,14 @@ def _process_returns_section(func_documentation, sig, config_class, indent_level
 
 
 def _process_example_section(
-    func_documentation, func, parent_class, class_name, model_name_lowercase, config_class, checkpoint, indent_level
+    func_documentation,
+    func,
+    parent_class,
+    class_name,
+    model_name_lowercase,
+    config_class,
+    checkpoint,
+    indent_level,
 ):
     """
     Process the example section of the docstring.
@@ -4186,7 +4230,10 @@ def auto_class_docstring(cls, custom_intro=None, custom_args=None, checkpoint=No
     docstring_args = ""
     if "PreTrainedModel" in (x.__name__ for x in cls.__mro__):
         docstring_init = auto_method_docstring(
-            cls.__init__, parent_class=cls, custom_args=custom_args, checkpoint=checkpoint
+            cls.__init__,
+            parent_class=cls,
+            custom_args=custom_args,
+            checkpoint=checkpoint,
         ).__doc__.replace("Args:", "Parameters:")
     elif "ProcessorMixin" in (x.__name__ for x in cls.__mro__):
         is_processor = True
@@ -4320,8 +4367,19 @@ def auto_class_docstring(cls, custom_intro=None, custom_args=None, checkpoint=No
                 param_default = str(getattr(cls, param_name, ""))
                 param_default = f", defaults to `{param_default}`" if param_default != "" else ""
 
-                param_type, optional_string, shape_string, additional_info, description, is_documented = (
-                    _get_parameter_info(param_name, documented_kwargs, source_args_dict, param_type, optional)
+                (
+                    param_type,
+                    optional_string,
+                    shape_string,
+                    additional_info,
+                    description,
+                    is_documented,
+                ) = _get_parameter_info(
+                    param_name,
+                    documented_kwargs,
+                    source_args_dict,
+                    param_type,
+                    optional,
                 )
 
                 if is_documented:
@@ -4504,10 +4562,18 @@ def auto_docstring(obj=None, *, custom_intro=None, custom_args=None, checkpoint=
     def auto_docstring_decorator(obj):
         if len(obj.__qualname__.split(".")) > 1:
             return auto_method_docstring(
-                obj, custom_args=custom_args, custom_intro=custom_intro, checkpoint=checkpoint
+                obj,
+                custom_args=custom_args,
+                custom_intro=custom_intro,
+                checkpoint=checkpoint,
             )
         else:
-            return auto_class_docstring(obj, custom_args=custom_args, custom_intro=custom_intro, checkpoint=checkpoint)
+            return auto_class_docstring(
+                obj,
+                custom_args=custom_args,
+                custom_intro=custom_intro,
+                checkpoint=checkpoint,
+            )
 
     if obj:
         return auto_docstring_decorator(obj)

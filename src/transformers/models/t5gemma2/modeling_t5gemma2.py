@@ -637,7 +637,7 @@ class T5Gemma2TextScaledWordEmbedding(nn.Embedding):
     ):
         super().__init__(num_embeddings, embedding_dim, padding_idx)
         self.scalar_embed_scale = embed_scale
-        self.register_buffer("embed_scale", torch.tensor(embed_scale), persistent=False)
+        self.embed_scale = nn.parameter.Buffer(torch.tensor(embed_scale), persistent=False)
         self.eoi_token_index = eoi_token_index
         self.eoi_embedding = nn.Parameter(torch.zeros(self.embedding_dim))
 
@@ -913,10 +913,10 @@ class T5Gemma2Encoder(T5Gemma2PreTrainedModel):
             special_image_mask = input_ids == image_token_id
 
         n_image_tokens = special_image_mask.sum()
-        special_image_mask = special_image_mask.unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
+        special_image_mask = special_image_mask.unsqueeze(-1).to(inputs_embeds.device)
         n_image_features = image_features.shape[0] * image_features.shape[1]
         torch_compilable_check(
-            inputs_embeds[special_image_mask].numel() == image_features.numel(),
+            n_image_tokens * inputs_embeds.shape[-1] == image_features.numel(),
             f"Image features and image tokens do not match: tokens: {n_image_tokens}, features {n_image_features}",
         )
         return special_image_mask

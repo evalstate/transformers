@@ -887,10 +887,10 @@ class Blip2QFormerModel(Blip2PreTrainedModel):
     _can_record_outputs = {
         "hidden_states": Blip2QFormerLayer,
         "attentions": [
-            OutputRecorder(Blip2QFormerMultiHeadAttention, index=1, layer_name=".attention"),
+            OutputRecorder(Blip2QFormerMultiHeadAttention, index=1, layer_name=r"\.attention"),
         ],
         "cross_attentions": [
-            OutputRecorder(Blip2QFormerMultiHeadAttention, index=1, layer_name=".crossattention"),
+            OutputRecorder(Blip2QFormerMultiHeadAttention, index=1, layer_name=r"\.crossattention"),
         ],
     }
 
@@ -1240,7 +1240,7 @@ class Blip2Model(Blip2PreTrainedModel):
         else:
             special_image_mask = input_ids == self.config.image_token_id
 
-        special_image_mask = special_image_mask.unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
+        special_image_mask = special_image_mask.unsqueeze(-1).to(inputs_embeds.device)
         return special_image_mask
 
     @can_return_tuple
@@ -1686,7 +1686,7 @@ class Blip2ForConditionalGeneration(Blip2PreTrainedModel, GenerationMixin):
         else:
             special_image_mask = input_ids == self.config.image_token_id
 
-        special_image_mask = special_image_mask.unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
+        special_image_mask = special_image_mask.unsqueeze(-1).to(inputs_embeds.device)
         return special_image_mask
 
     @can_return_tuple
@@ -1913,7 +1913,7 @@ class Blip2ForConditionalGeneration(Blip2PreTrainedModel, GenerationMixin):
         else:
             special_image_mask = input_ids == self.config.image_token_id
 
-        special_image_mask = special_image_mask.unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
+        special_image_mask = special_image_mask.unsqueeze(-1).to(inputs_embeds.device)
         language_model_inputs = language_model_inputs.to(inputs_embeds.device, inputs_embeds.dtype)
         inputs_embeds = inputs_embeds.masked_scatter(special_image_mask, language_model_inputs)
 

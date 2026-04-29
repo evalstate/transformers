@@ -19,6 +19,7 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, is_dataclass
+from math import ceil
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from huggingface_hub import create_repo
@@ -89,6 +90,7 @@ class GenerationMode(ExplicitEnum):
     GREEDY_SEARCH = "greedy_search"
     SAMPLE = "sample"
     ASSISTED_GENERATION = "assisted_generation"
+    MTP_DECODING = "mtp_decoding"
     DOLA_GENERATION = "dola_generation"
     # Beam methods
     BEAM_SEARCH = "beam_search"
@@ -343,6 +345,10 @@ class GenerationConfig(PushToHubMixin):
             If set to a positive integer, the re-encodeing process will additionally consider the last `target_lookbehind` target tokens
             to correctly align tokens. Can only be used with different tokenizers in speculative decoding.
             See this [blog](https://huggingface.co/blog/universal_assisted_generation) for more details.
+        use_mtp(`bool`, *optional*, defaults to `False`):
+            If `True`, speculate with the model's Multi-Token Prediction (MTP) modules (DeepSeek-V3 / GLM-4 MoE style).
+            The base model drafts `config.num_nextn_predict_layers` extra tokens per step via the MTP heads, then
+            verifies them in a single forward pass — standard speculative decoding, shared weights + KV cache.
 
         > Parameters related to performances and compilation
 
@@ -446,6 +452,7 @@ class GenerationConfig(PushToHubMixin):
         self.assistant_early_exit = kwargs.pop("assistant_early_exit", None)
         self.assistant_lookbehind = kwargs.pop("assistant_lookbehind", None)
         self.target_lookbehind = kwargs.pop("target_lookbehind", None)
+        self.use_mtp = kwargs.pop("use_mtp", False)
 
         # Performance
         self.compile_config = kwargs.pop("compile_config", None)
@@ -554,6 +561,16 @@ class GenerationConfig(PushToHubMixin):
                     "You've set `assistant_model`, which triggers assisted generate. Currently, assisted generate "
                     "is only supported with Greedy Search and Sample. However, the base decoding mode (based on "
                     f"current flags) is {generation_mode} -- some of the set flags will be ignored."
+                )
+
+        # Multi-Token Prediction decoding uses the model's own MTP modules as the draft
+        if self.use_mtp:
+            if generation_mode in (GenerationMode.GREEDY_SEARCH, GenerationMode.SAMPLE):
+                generation_mode = GenerationMode.MTP_DECODING
+            else:
+                logger.warning(
+                    f"`use_mtp=True` is only supported with Greedy Search and Sample; the current mode is "
+                    f"{generation_mode}. Ignoring `use_mtp`."
                 )
 
         # DoLa generation may extend some generation modes
@@ -1620,9 +1637,9 @@ class ContinuousBatchingConfig:
             Maximum percentage of free GPU memory (after the model is loaded) to use for the KV cache. When `None`,
             resolved at runtime to 0.9 if there is no logit processing and 0.8 if there is, to leave headroom for
             vocabulary-sized temporary tensors.
-        max_blocks_per_request (`int`, *optional*, defaults to 0):
+        max_blocks_per_request (`int`, *optional*):
             Maximum blocks per request, used in the `flash_attn_with_kvcache` fast decode path to dimension
-            the block table. Setting this to 0 disables the fast decode path.
+            the block table. Setting this to 0 disables the fast decode path. Default is None (auto-inferred).
         allow_block_sharing (`bool`, *optional*, defaults to `True`):
             Whether to allow block sharing for prefix caching. Block sharing can only be allowed, never forced,
             as some models do not support it. Disable if you have few short prompts but long generation lengths.
@@ -1681,8 +1698,8 @@ class ContinuousBatchingConfig:
     max_memory_percent: float | None = None
 
     # This is only used in the flash_attn_with_kvcache fast decode path to dimension the block table. If it is set to 0,
-    # the fast decode path will not be used. Currently turned off by default.
-    max_blocks_per_request: int | None = 0
+    # the fast decode path will not be used. Auto-inferred from GPU memory when `None` (default).
+    max_blocks_per_request: int | None = None
 
     # Block sharing can only be allowed, but never forced: some model just do not support it. If you only have a few
     # short prompts, but long generation lengths, you might want to disable block sharing.
@@ -1738,6 +1755,13 @@ class ContinuousBatchingConfig:
     # When True, processors explicitly marked as unsupported are removed with a warning. When False, all processors
     # are kept but warnings are logged for unsupported/unknown ones.
     drop_unsupported_processors: bool = True
+
+    @property
+    def fallback_max_blocks_per_request(self) -> int:
+        """Returns the fallback max blocks per request. If no user-hint is given and decode path is available, this is
+        the default max blocks per request. With default block size of 256, this means a max sequence length of 8192
+        tokens for the fast decode path."""
+        return 32
 
     def account_for_cb_deprecated_arguments(
         self,
@@ -1919,3 +1943,17 @@ class ContinuousBatchingConfig:
         # Modify in place
         self.varlen_compile_config = varlen_config
         self.decode_compile_config = decode_config
+
+    def resolve_using_hints(self, workload_hints: dict[str, int] | None) -> None:
+        """Resolves the config using workload hints. If the hints are not provided, we use a default value."""
+        if workload_hints is None:
+            return None
+        max_prompt_length = workload_hints.get("max_prompt_length", 0)
+        max_generated_length = workload_hints.get("max_generated_length", 0)
+        # The max number of block per request is an even number large enough to hold the max request length
+        if max_prompt_length and max_generated_length:
+            # We only overwrite the max blocks per request if it is not set yet
+            if self.max_blocks_per_request is None:
+                max_sequence_length = max_prompt_length + max_generated_length
+                blocks_per_request = int(ceil(max_sequence_length / self.block_size)) + 1
+                self.max_blocks_per_request = blocks_per_request + (blocks_per_request % 2)

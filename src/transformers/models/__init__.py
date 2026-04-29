@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from .aria import *
     from .audio_spectrogram_transformer import *
     from .audioflamingo3 import *
+    from .audiovisualflamingo import *
     from .auto import *
     from .autoformer import *
     from .aya_vision import *
@@ -81,6 +82,7 @@ if TYPE_CHECKING:
     from .cpmant import *
     from .csm import *
     from .ctrl import *
+    from .ctsm import *
     from .cvt import *
     from .cwm import *
     from .d_fine import *
@@ -91,8 +93,10 @@ if TYPE_CHECKING:
     from .deberta import *
     from .deberta_v2 import *
     from .decision_transformer import *
+    from .deepseek_ocr2 import *
     from .deepseek_v2 import *
     from .deepseek_v3 import *
+    from .deepseek_v4 import *
     from .deepseek_vl import *
     from .deepseek_vl_hybrid import *
     from .deformable_detr import *
@@ -134,6 +138,7 @@ if TYPE_CHECKING:
     from .esm import *
     from .evolla import *
     from .exaone4 import *
+    from .exaone4_5 import *
     from .exaone_moe import *
     from .falcon import *
     from .falcon_h1 import *
@@ -177,7 +182,9 @@ if TYPE_CHECKING:
     from .gpt_sw3 import *
     from .gptj import *
     from .granite import *
+    from .granite4_vision import *
     from .granite_speech import *
+    from .granite_speech_plus import *
     from .granitemoe import *
     from .granitemoehybrid import *
     from .granitemoeshared import *
@@ -208,6 +215,7 @@ if TYPE_CHECKING:
     from .janus import *
     from .jetmoe import *
     from .jina_embeddings_v3 import *
+    from .kimi2_6 import *
     from .kosmos2 import *
     from .kosmos2_5 import *
     from .kyutai_speech_to_text import *
@@ -250,6 +258,7 @@ if TYPE_CHECKING:
     from .metaclip_2 import *
     from .mgp_str import *
     from .mimi import *
+    from .minicpm3 import *
     from .minicpmv4_6 import *
     from .minimax import *
     from .minimax_m2 import *
@@ -314,6 +323,7 @@ if TYPE_CHECKING:
     from .pe_video import *
     from .pegasus import *
     from .pegasus_x import *
+    from .penguinvl import *
     from .perceiver import *
     from .perception_lm import *
     from .persimmon import *
@@ -378,6 +388,7 @@ if TYPE_CHECKING:
     from .sam3_tracker_video import *
     from .sam3_video import *
     from .sam_hq import *
+    from .sarvam_mla import *
     from .seamless_m4t import *
     from .seamless_m4t_v2 import *
     from .seed_oss import *

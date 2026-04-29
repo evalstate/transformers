@@ -17,13 +17,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ...image_processing_backends import TorchvisionBackend
 from ...image_utils import IMAGENET_STANDARD_MEAN, IMAGENET_STANDARD_STD, PILImageResampling
 from ...utils import auto_docstring
+from ..siglip.image_processing_siglip import SiglipImageProcessor
 
 
 @auto_docstring
-class PI0ImageProcessor(TorchvisionBackend):
+class PI0ImageProcessor(SiglipImageProcessor):
     resample = PILImageResampling.BICUBIC
     image_mean = IMAGENET_STANDARD_MEAN
     image_std = IMAGENET_STANDARD_STD

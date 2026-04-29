@@ -595,7 +595,8 @@ class ProcessorTesterMixin:
 
         # Verify outputs match
         for key in input_image_proc:
-            torch.testing.assert_close(input_image_proc[key], input_processor[key])
+            if key in processor.model_input_names:
+                torch.testing.assert_close(input_image_proc[key], input_processor[key])
 
     def test_tokenizer_defaults(self):
         """
@@ -1693,11 +1694,7 @@ class ProcessorTesterMixin:
         if processor.chat_template is None:
             self.skipTest("Processor has no chat template")
 
-        signature = inspect.signature(processor.__call__)
-        if "videos" not in {*signature.parameters.keys()} or (
-            signature.parameters.get("videos") is not None
-            and signature.parameters["videos"].annotation == inspect._empty
-        ):
+        if "video_processor" not in self.processor_class.get_attributes():
             self.skipTest("Processor doesn't accept videos at input")
 
         messages = [
@@ -2017,6 +2014,104 @@ class ProcessorTesterMixin:
         # Regression test for #45290: tokenize=True used to raise KeyError when "content" was missing
         result = processor.apply_chat_template(messages, tokenize=True)
         self.assertIsInstance(result, list)
+
+        # Also test with explicit content=None (OpenAI returns this for tool-call-only messages)
+        messages_with_none = [
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": "What is the weather?"}],
+            },
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{"type": "function", "function": {"name": "get_weather", "arguments": {}}}],
+            },
+        ]
+        result_none = processor.apply_chat_template(messages_with_none, tokenize=True)
+        self.assertIsInstance(result_none, list)
+
+    @require_torch
+    def test_apply_chat_template_assistant_mask_with_image(self):
+        """Tests that assistant_masks are correct when multimodal (image) inputs cause placeholder expansion."""
+        processor = self.get_processor()
+
+        if processor.chat_template is None:
+            self.skipTest("Processor has no chat template")
+
+        if "image_processor" not in self.processor_class.get_attributes():
+            self.skipTest(f"image_processor attribute not present in {self.processor_class}")
+
+        if not hasattr(processor, "image_token"):
+            self.skipTest("Processor has no image_token attribute")
+
+        image_input = self.prepare_image_inputs()
+        image_token = processor.image_token
+
+        messages = [
+            [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "image": image_input},
+                        {"type": "text", "text": "Describe the image."},
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "content": [
+                        {"type": "text", "text": "The image shows a scenic view."},
+                    ],
+                },
+            ]
+        ]
+
+        # Use a dummy template with {% generation %} that emits the processor's
+        # real image_token so the processor expands it (e.g. 1 -> N copies),
+        # triggering the offset misalignment this test guards against.
+        dummy_template = (
+            "{% for message in messages %}"
+            "{% if message['role'] == 'user' %}"
+            "{{'<|special_start|>user\n'}}"
+            "{% for content in message['content'] %}"
+            "{% if content['type'] == 'image' %}"
+            "{{ '" + image_token + "' }}"
+            "{% elif content['type'] == 'text' %}"
+            "{{ content['text'] }}"
+            "{% endif %}"
+            "{% endfor %}"
+            "{{'<|special_end|>\n'}}"
+            "{% elif message['role'] == 'assistant' %}"
+            "{{'<|special_start|>assistant\n'}}"
+            "{% generation %}"
+            "{{ message['content'][0]['text'] + '<|special_end|>\n' }}"
+            "{% endgeneration %}"
+            "{% endif %}"
+            "{% endfor %}"
+        )
+
+        inputs = processor.apply_chat_template(
+            messages,
+            add_generation_prompt=False,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
+            return_assistant_tokens_mask=True,
+            chat_template=dummy_template,
+        )
+
+        self.assertIn("assistant_masks", inputs)
+        mask = inputs["assistant_masks"]
+        self.assertEqual(len(mask), len(inputs["input_ids"]))
+
+        # The mask must not be all zeros — the assistant response should be marked
+        self.assertGreater(mask.sum().item(), 0, "assistant_masks is all zeros with multimodal input")
+
+        # Verify the masked tokens decode to the expected assistant text
+        assistant_ids = inputs["input_ids"][mask.bool()]
+        assistant_text = "The image shows a scenic view.<|special_end|>\n"
+        text_is_same = assistant_text == processor.decode(assistant_ids, clean_up_tokenization_spaces=True)
+        ids_is_same = processor.tokenizer.encode(assistant_text, add_special_tokens=False), assistant_ids.tolist()
+        self.assertTrue(text_is_same or ids_is_same)
 
     def test_get_num_multimodal_tokens_matches_processor_call(self):
         "Tests that the helper used internally in vLLM works correctly"

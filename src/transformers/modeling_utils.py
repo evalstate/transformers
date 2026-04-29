@@ -1259,7 +1259,10 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         ```
 
          This means you can record outputs from the same class, by specifying a layer name. Before
-         collecting outputs, we check that they come from this layer.
+         collecting outputs, we check that they come from this layer. `layer_name` is a regex pattern
+         (matched with `re.search` against the submodule's dotted qualified name), so anchors can be used
+         to target a single index without prefix-matching siblings (e.g. `"layers\\.1$"` matches `layers.1`
+         but not `layers.10`).
 
          If you have cross attention that come from `LlamaAttention` and self attention that also
          come from `LlamaAttention` but from `self_attn` you can do this:
@@ -1267,10 +1270,20 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
          ```python
          class LlamaModel(PreTrainedModel):
              _can_record_outputs = {
-                 "attentions": OutputRecorder(LlamaAttention, index=1, layer-name="self_attn"),
+                 "attentions": OutputRecorder(LlamaAttention, index=1, layer_name="self_attn"),
                  "cross_attentions": OutputRecorder(LlamaAttention, index=1, layer_name="cross_attn")
              }
 
+        ```
+
+         Regex alternation can also be used to pick a non-contiguous subset of layers, e.g. to
+         capture hidden states from layers 6, 12, and 18 only:
+
+         ```python
+         class MyModel(PreTrainedModel):
+             _can_record_outputs = {
+                 "hidden_states": OutputRecorder(MyBlock, layer_name=r"layers\\.(6|12|18)$"),
+             }
         ```
         """
         return self._can_record_outputs or {}
@@ -1368,6 +1381,9 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         self._keep_in_fp32_modules_strict = set(self._keep_in_fp32_modules_strict or [])
         # Current submodel must register its `_no_split_modules` as well
         self._no_split_modules = set(self._no_split_modules or [])
+        # Current submodel must register the `_keys_to_ignore_on_load_unexpected/missing`
+        self._keys_to_ignore_on_load_unexpected = self._keys_to_ignore_on_load_unexpected or []
+        self._keys_to_ignore_on_load_missing = self._keys_to_ignore_on_load_missing or []
 
         # Iterate over children only: as the final model is created, this is enough to gather the properties from all submodels.
         # This works because the way the `__init__` and `post_init` are called on all submodules is depth-first in the graph
@@ -1390,17 +1406,40 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
             # Record `_no_split_modules` from the children
             if no_split := getattr(module, "_no_split_modules", None):
                 self._no_split_modules.update(no_split)
+            # Record `_keys_to_ignore_on_load_unexpected/missing` from the children
+            if ignore_unexpected := getattr(module, "_keys_to_ignore_on_load_unexpected", None):
+                self._keys_to_ignore_on_load_unexpected.extend(
+                    [f"{name}.{child_name}" for child_name in ignore_unexpected]
+                )
+            if ignore_missing := getattr(module, "_keys_to_ignore_on_load_missing", None):
+                self._keys_to_ignore_on_load_missing.extend([f"{name}.{child_name}" for child_name in ignore_missing])
+
+        # Preserve the current no-tie scope on this instance so only the model
+        # being initialized in that scope skips tie_weights().
+        self._skip_tie_weights_scope = init._SKIP_TIE_WEIGHTS_SCOPE.get()
 
         # Maybe initialize the weights and tie the keys
         self.init_weights()
         self._backward_compatibility_gradient_checkpointing()
+        # Cache the list of (name, submodule) pairs where the submodule is a PreTrainedModel.
+        # This pattern is used in several places across the codebase; computing it once avoids
+        # repeated traversal of the full module tree.
+        self._named_pretrained_submodules: list[tuple[str, PreTrainedModel]] = [
+            (name, module) for name, module in self.named_modules() if isinstance(module, PreTrainedModel)
+        ]
+
+    @property
+    def has_ep(self) -> bool:
+        """Whether expert parallelism is enabled for this model."""
+        distributed_config = getattr(getattr(self, "config", None), "distributed_config", None)
+        return distributed_config is not None and getattr(distributed_config, "enable_expert_parallel", False)
 
     @property
     def tp_plan(self) -> dict[str, str]:
         """
         The full tp plan for the model's modules
         """
-        if hasattr(self.config, "distributed_config") and self.config.distributed_config.enable_expert_parallel:
+        if self.has_ep:
             return self._ep_plan
         return self._tp_plan
 
@@ -2371,7 +2410,7 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
 
         if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.ConvTranspose1d, nn.ConvTranspose2d)):
             if getattr(module, "weight", None) is not None:
-                init.normal_(module.weight, mean=0.0, std=std)
+                init.normal_(module.weight.float(), mean=0.0, std=std)
             if module.bias is not None:
                 init.zeros_(module.bias)
         elif isinstance(module, nn.Embedding):
@@ -2591,6 +2630,9 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         `source` is missing in the checkpoint while `target` exists, we *swap* source and target so we can still
         tie everything to the parameter that actually exists.
         """
+        if init.should_skip_tie_weights(self):
+            return
+
         # In this case, the keys stored in `all_tied_weights_keys` are already correct
         if not recompute_mapping:
             tied_keys = self.all_tied_weights_keys
@@ -3671,14 +3713,27 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
 
     @classmethod
     def get_init_context(
-        cls, dtype: torch.dtype, is_quantized: bool, _is_ds_init_called: bool, allow_all_kernels: bool | None
+        cls,
+        dtype: torch.dtype,
+        is_quantized: bool,
+        _is_ds_init_called: bool,
+        allow_all_kernels: bool | None,
+        distributed_config=None,
     ):
         # Need to instantiate with correct dtype
         init_contexts = [local_torch_dtype(dtype, cls.__name__), init.no_tie_weights(), apply_patches()]
         # Needed as we cannot forward the `allow_all_kernels` arg in the model's __init__
         if allow_all_kernels:
             init_contexts.append(allow_all_hub_kernels())
-        if is_deepspeed_zero3_enabled():
+        _has_ep = distributed_config is not None and getattr(distributed_config, "enable_expert_parallel", False)
+        if _has_ep and is_deepspeed_zero3_enabled():
+            # EP + DeepSpeed: use meta device (same as the normal non-DS path).
+            # zero.Init is skipped because EP needs to shard experts via distribute_model()
+            # hooks, which are incompatible with ZeRO-3 lazy parameters.
+            # The standard weight loading path (not zero3) handles EP sharding via
+            # shard_and_distribute_module. deepspeed.initialize() wraps the result later.
+            init_contexts.extend([torch.device("meta"), init.meta_device_safe_creation_ops()])
+        elif is_deepspeed_zero3_enabled():
             import deepspeed
 
             # We cannot initialize the model on meta device with deepspeed when not quantized
@@ -4086,6 +4141,12 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
             download_kwargs_with_commit,
             **adapter_kwargs,
         )
+        # EP + DeepSpeed: clear device_map (set by initialize_tensor_parallelism) so the model
+        # loads on CPU first. distribute_model() handles GPU placement during EP sharding.
+        # Without this, device_map triggers accelerate's dispatch path which breaks shard loading.
+        _has_ep = distributed_config is not None and getattr(distributed_config, "enable_expert_parallel", False)
+        if _has_ep and is_deepspeed_zero3_enabled():
+            device_map = None
         device_map = check_and_set_device_map(device_map)  # warn, error and fix the device map
 
         user_agent = {"file_type": "model", "framework": "pytorch", "from_auto_class": from_auto_class}
@@ -4194,7 +4255,9 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
 
             register_fusion_patches(cls, config, fusion_config)
 
-        model_init_context = cls.get_init_context(dtype, is_quantized, _is_ds_init_called, allow_all_kernels)
+        model_init_context = cls.get_init_context(
+            dtype, is_quantized, _is_ds_init_called, allow_all_kernels, distributed_config
+        )
 
         config = copy.deepcopy(config)  # We do not want to modify the config inplace in from_pretrained.
         with ContextManagers(model_init_context):
@@ -4327,7 +4390,11 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
 
         error_msgs = []
 
-        if is_deepspeed_zero3_enabled() and not is_quantized:
+        # EP + DeepSpeed: skip zero3 loading path. The model was created on meta device
+        # (not via zero.Init), so params are not zero3-partitioned. The standard loading
+        # path handles EP sharding via shard_and_distribute_module using the EP plan hooks
+        # registered by distribute_model(). deepspeed.initialize() wraps the result later.
+        if is_deepspeed_zero3_enabled() and not is_quantized and not model.has_ep:
             if state_dict is None:
                 merged_state_dict = {}
                 for ckpt_file in checkpoint_files:
@@ -4646,14 +4713,12 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         """
         is_quantized = hf_quantizer is not None
         # This is the only case where we do not initialize the model on meta device, so we don't have to do anything here
-        if is_deepspeed_zero3_enabled() and not is_quantized:
+        # Exception: EP + DeepSpeed uses meta device (not zero.Init), so it needs the standard move path.
+        if is_deepspeed_zero3_enabled() and not is_quantized and not self.has_ep:
             return
 
-        # In this case we need to move everything back
+        # Leave parameters on meta on non-rank-0 FSDP ranks (rank-0 broadcast overwrites them); only buffers need real placeholders.
         if is_fsdp_enabled() and not is_local_dist_rank_0() and not is_quantized:
-            for key, param in self.named_parameters():
-                value = torch.zeros_like(param, device="cpu")
-                _load_parameter_into_model(self, key, value)
             for key, buffer in self.named_buffers():
                 value = torch.zeros_like(buffer, device="cpu")
                 _load_parameter_into_model(self, key, value)
@@ -4704,7 +4769,7 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
             self._is_hf_initialized = True
 
         # This will only initialize submodules that are not marked as initialized by the line above.
-        if is_deepspeed_zero3_enabled() and not is_quantized:
+        if is_deepspeed_zero3_enabled() and not is_quantized and not self.has_ep:
             import deepspeed
 
             # keep_vars=True as we need the original tensors, so that the "_is_hf_initialized" is present on them

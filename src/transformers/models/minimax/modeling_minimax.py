@@ -274,8 +274,8 @@ class MiniMaxRotaryEmbedding(nn.Module):
             rope_init_fn = ROPE_INIT_FUNCTIONS[self.rope_type]
         inv_freq, self.attention_scaling = rope_init_fn(self.config, device)
 
-        self.register_buffer("inv_freq", inv_freq, persistent=False)
-        self.register_buffer("original_inv_freq", inv_freq.clone(), persistent=False)
+        self.inv_freq = nn.parameter.Buffer(inv_freq, persistent=False)
+        self.original_inv_freq = nn.parameter.Buffer(inv_freq.clone(), persistent=False)
 
     @staticmethod
     def compute_default_rope_parameters(
@@ -596,7 +596,7 @@ class MiniMaxPreTrainedModel(PreTrainedModel):
     _can_compile_fullgraph = False  # uses a non-compilable custom cache class MiniMaxCache
     _supports_attention_backend = True
     _can_record_outputs = {
-        "router_logits": OutputRecorder(MiniMaxTopKRouter, layer_name="mlp.gate", index=0),
+        "router_logits": OutputRecorder(MiniMaxTopKRouter, layer_name=r"mlp\.gate", index=0),
         "hidden_states": MiniMaxDecoderLayer,
         "attentions": [MiniMaxAttention, MiniMaxLightningAttention],
     }

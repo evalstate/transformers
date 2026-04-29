@@ -289,7 +289,7 @@ _HUB_KERNEL_MAPPING: dict[str, dict[str, str]] = {
     "falcon_mamba-ssm": {"repo_id": "kernels-community/mamba-ssm", "version": 1},
     "finegrained-fp8": {"repo_id": "kernels-community/finegrained-fp8", "version": 1},
     "deep-gemm": {"repo_id": "kernels-community/deep-gemm", "version": 1},
-    "sonic-moe": {"repo_id": "kernels-community/sonic-moe", "version": 1},
+    "sonic-moe": {"repo_id": "IlyasMoutawwakil/sonic-moe", "revision": "main"},
 }
 
 _KERNEL_MODULE_MAPPING: dict[str, ModuleType | None] = {}
@@ -359,7 +359,11 @@ def load_and_register_attn_kernel(
 
     # Register the kernel as a valid attention
     ALL_ATTENTION_FUNCTIONS.register(attn_implementation, kernel_function)
-    ALL_MASK_ATTENTION_FUNCTIONS.register(attn_implementation, ALL_MASK_ATTENTION_FUNCTIONS["flash_attention_2"])
+
+    # Allow the kernel module to declare its preferred mask function (e.g., MASK_FUNCTION = "sdpa").
+    # Falls back to "flash_attention_2" for backward compatibility with existing kernels.
+    mask_type = getattr(kernel, "MASK_FUNCTION", "flash_attention_2")
+    ALL_MASK_ATTENTION_FUNCTIONS.register(attn_implementation, ALL_MASK_ATTENTION_FUNCTIONS[mask_type])
 
     return kernel
 
@@ -376,7 +380,9 @@ def lazy_load_kernel(kernel_name: str, mapping: dict[str, ModuleType | None] = _
             repo_id = _HUB_KERNEL_MAPPING[kernel_name]["repo_id"]
             revision = _HUB_KERNEL_MAPPING[kernel_name].get("revision", None)
             version = _HUB_KERNEL_MAPPING[kernel_name].get("version", None)
-            kernel = get_kernel(repo_id, revision=revision, version=version)
+            # Entries in `_HUB_KERNEL_MAPPING` are vetted in-tree, so we trust non-`kernels-community`
+            # repos (e.g. user/team forks) without requiring the per-call `allow_all_kernels` flag.
+            kernel = get_kernel(repo_id, revision=revision, version=version, allow_all_kernels=True)
             mapping[kernel_name] = kernel
         except FileNotFoundError:
             mapping[kernel_name] = None
