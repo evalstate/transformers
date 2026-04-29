@@ -417,6 +417,8 @@ class DogeDecoderLayer(GradientCheckpointingLayer):
         residual = hidden_states
         hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
+        if isinstance(hidden_states, tuple):
+            hidden_states, _ = hidden_states
         hidden_states = F.dropout(hidden_states, p=self.hidden_dropout, training=self.training)
         hidden_states = self.post_attention_residual * residual + hidden_states
 
@@ -439,6 +441,9 @@ class DogePreTrainedModel(LlamaPreTrainedModel):
         if isinstance(module, DogeAttention):
             if hasattr(module, "A"):
                 init.zeros_(module.A)
+        elif isinstance(module, DogeCDMoE):
+            if hasattr(module, "router_gate"):
+                init.zeros_(module.router_gate.weight)
         elif isinstance(module, DogeDecoderLayer):
             if hasattr(module, "input_residual"):
                 init.ones_(module.input_residual)
