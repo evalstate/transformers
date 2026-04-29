@@ -101,6 +101,13 @@ _import_structure = {
     ],
     "data.metrics": [],
     "data.processors": [],
+    "data_producer": [
+        "AsyncDataProducer",
+        "BaseDataProducer",
+        "DataProducer",
+        "DataProducerCallback",
+        "ProducerConfig",
+    ],
     "debug_utils": [],
     "dependency_versions_check": [],
     "dependency_versions_table": [],
@@ -543,6 +550,13 @@ if TYPE_CHECKING:
     from .data.datasets import GlueDataTrainingArguments as GlueDataTrainingArguments
     from .data.datasets import SquadDataset as SquadDataset
     from .data.datasets import SquadDataTrainingArguments as SquadDataTrainingArguments
+
+    # DataProducer
+    from .data_producer import AsyncDataProducer as AsyncDataProducer
+    from .data_producer import BaseDataProducer as BaseDataProducer
+    from .data_producer import DataProducer as DataProducer
+    from .data_producer import DataProducerCallback as DataProducerCallback
+    from .data_producer import ProducerConfig as ProducerConfig
     from .feature_extraction_sequence_utils import SequenceFeatureExtractor as SequenceFeatureExtractor
 
     # Feature Extractor
