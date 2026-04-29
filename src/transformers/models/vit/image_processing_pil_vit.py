@@ -18,7 +18,7 @@ from ...image_utils import IMAGENET_STANDARD_MEAN, IMAGENET_STANDARD_STD, PILIma
 
 
 class ViTImageProcessorPil(PilBackend):
-    resample = PILImageResampling.BILINEAR
+    resample = PILImageResampling.BICUBIC
     image_mean = IMAGENET_STANDARD_MEAN
     image_std = IMAGENET_STANDARD_STD
     size = {"height": 224, "width": 224}
