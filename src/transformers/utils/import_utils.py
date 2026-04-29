@@ -913,7 +913,9 @@ def is_g2p_en_available() -> bool:
 
 @lru_cache
 def is_torch_neuroncore_available(check_device=True) -> bool:
-    return is_torch_xla_available() and _is_package_available("torch_neuronx")[0]
+    if importlib.util.find_spec("torch_neuronx") is not None:
+        return is_torch_xla_available(check_is_gpu=check_device)
+    return False
 
 
 @lru_cache
