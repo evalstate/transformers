@@ -310,6 +310,8 @@ class GgufModelTests(unittest.TestCase):
     qwen3_model_id = "Qwen/Qwen3-0.6B-GGUF"
     qwen3moe_model_id = "Qwen/Qwen3-30B-A3B-GGUF"
     qwen35moe_model_id = "unsloth/Qwen3.6-35B-A3B-GGUF"
+    qwen2vl_model_id = "unsloth/Qwen2.5-VL-3B-Instruct-GGUF"
+    original_qwen2vl_model_id = "Qwen/Qwen2.5-VL-3B-Instruct"
     umt5_encoder_model_id = "city96/umt5-xxl-encoder-gguf"
     lfm2_model_id = "LiquidAI/LFM2-1.2B-GGUF"
     llama4_model_id = "unsloth/Llama-4-Scout-17B-16E-Instruct-GGUF"
@@ -352,6 +354,7 @@ class GgufModelTests(unittest.TestCase):
     q8_0_qwen3_model_id = "Qwen3-0.6B-Q8_0.gguf"
     q4_k_m_qwen3moe_model_id = "Qwen3-30B-A3B-Q4_K_M.gguf"
     iq3_s_qwen35moe_model_id = "Qwen3.6-35B-A3B-UD-IQ3_S.gguf"
+    q8_0_qwen2vl_model_id = "Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
     q8_0_umt5_encoder_model_id = "umt5-xxl-encoder-Q8_0.gguf"
     q4_k_m_lfm2_model_id = "LFM2-1.2B-Q4_K_M.gguf"
     q2_k_l_llama4_model_id = "Llama-4-Scout-17B-16E-Instruct-Q2_K_L.gguf"
@@ -980,6 +983,29 @@ class GgufModelTests(unittest.TestCase):
             gguf_file=self.bf16_gemma3_vision_model_id,
             dtype=torch.float16,
         ).model
+
+        converted_state_dict = converted_model.state_dict()
+        original_state_dict = original_model.state_dict()
+
+        for layer_name, original_params in original_state_dict.items():
+            if layer_name in converted_state_dict:
+                self.assertTrue(original_params.shape == converted_state_dict[layer_name].shape)
+                torch.testing.assert_close(original_params, converted_state_dict[layer_name])
+            else:
+                raise ValueError(f"Layer {layer_name} is not presented in GGUF model")
+
+    @unittest.skipUnless(is_gguf_available("0.16.0"), "test requires gguf version >= 0.16.0")
+    def test_qwen2vl(self):
+        original_model = AutoModelForCausalLM.from_pretrained(
+            self.original_qwen2vl_model_id,
+            dtype=torch.float16,
+        ).language_model
+
+        converted_model = AutoModelForCausalLM.from_pretrained(
+            self.qwen2vl_model_id,
+            gguf_file=self.q8_0_qwen2vl_model_id,
+            dtype=torch.float16,
+        )
 
         converted_state_dict = converted_model.state_dict()
         original_state_dict = original_model.state_dict()

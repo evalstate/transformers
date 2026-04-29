@@ -724,6 +724,8 @@ def get_gguf_hf_weights_map(
         model_type = "qwen3next"
     elif model_type == "gemma3_text":
         model_type = "gemma3"
+    elif model_type == "qwen2_vl":
+        model_type = "qwen2vl"
     elif model_type == "umt5":
         model_type = "t5"
     elif model_type == "minimax_m2":
