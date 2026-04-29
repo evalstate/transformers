@@ -18,6 +18,7 @@ batch size finder, pad/concatenate, collators, and eval loop container.
 """
 
 import copy
+import random
 import tempfile
 import unittest
 import warnings
@@ -25,6 +26,7 @@ import warnings
 import numpy as np
 import torch
 from torch import nn
+from torch.utils.data import BatchSampler, Dataset
 
 from transformers import (
     GPT2Config,
@@ -382,6 +384,67 @@ class TrainerSamplerTest(unittest.TestCase):
         self.assertEqual(lengths[indices_process_0[0]], 50)
         # The indices should be a permutation of range(100)
         self.assertEqual(sorted(indices_process_0 + indices_process_1), list(range(100)))
+
+    def test_distributed_length_grouped_sampler(self):
+        data = []
+        for length in range(10, 110, 10):
+            for _ in range(10):
+                data.append({"input_ids": torch.randn(length)})
+        random.shuffle(data)
+
+        sampler = DistributedLengthGroupedSampler(
+            batch_size=10,
+            dataset=data,
+            num_replicas=1,
+            rank=0,
+            mega_batch_mult=100,
+        )
+        batches = list(BatchSampler(sampler, batch_size=10, drop_last=False))
+
+        next_batch = batches[0]
+        self.assertEqual(len(next_batch), 10)
+        self.assertTrue(all(len(data[i]["input_ids"]) == len(data[next_batch[0]]["input_ids"]) for i in next_batch))
+
+        other_batch = batches[1]
+        self.assertEqual(len(other_batch), 10)
+        self.assertTrue(all(len(data[i]["input_ids"]) == len(data[other_batch[0]]["input_ids"]) for i in other_batch))
+        self.assertNotEqual(len(data[next_batch[0]]["input_ids"]), len(data[other_batch[0]]["input_ids"]))
+
+    def test_distributed_length_grouped_sampler_custom_lengths(self):
+        data = []
+        for length in range(10, 110, 10):
+            for _ in range(10):
+                data.append(torch.randn(1, length))
+        random.shuffle(data)
+
+        class TensorListDataset(Dataset):
+            def __init__(self, tensors):
+                self.tensors = tensors
+
+            def __getitem__(self, index):
+                return self.tensors[index]
+
+            def __len__(self):
+                return len(self.tensors)
+
+        sampler = DistributedLengthGroupedSampler(
+            batch_size=10,
+            dataset=TensorListDataset(data),
+            num_replicas=1,
+            rank=0,
+            length_func=lambda sample: sample.shape[1],
+            mega_batch_mult=100,
+        )
+        batches = list(BatchSampler(sampler, batch_size=10, drop_last=False))
+
+        next_batch = batches[0]
+        self.assertEqual(len(next_batch), 10)
+        self.assertTrue(all(data[i].shape[1] == data[next_batch[0]].shape[1] for i in next_batch))
+
+        other_batch = batches[1]
+        self.assertEqual(len(other_batch), 10)
+        self.assertTrue(all(data[i].shape[1] == data[other_batch[0]].shape[1] for i in other_batch))
+        self.assertNotEqual(data[next_batch[0]].shape[1], data[other_batch[0]].shape[1])
 
     def test_distributed_sampler_with_loop(self):
         batch_size = 16
