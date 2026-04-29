@@ -394,7 +394,7 @@ class Gemma3nVisionConfig(PreTrainedConfig):
 @strict
 class Gemma3nConfig(PreTrainedConfig):
     r"""
-    audio_soft_tokens_per_image (`int`, *optional*, defaults to 188):
+    audio_soft_tokens_per_audio (`int`, *optional*, defaults to 188):
         The number of soft tokens per audio clip.
     vision_soft_tokens_per_image (`int`, *optional*, defaults to 256):
         The number of soft tokens per image.
@@ -441,7 +441,7 @@ class Gemma3nConfig(PreTrainedConfig):
     text_config: Gemma3nTextConfig | dict[str, Any] | None = None
     vision_config: Gemma3nVisionConfig | dict[str, Any] | None = None
     audio_config: Gemma3nAudioConfig | dict[str, Any] | None = None
-    audio_soft_tokens_per_image: int | None = 188
+    audio_soft_tokens_per_audio: int | None = 188
     vision_soft_tokens_per_image: int | None = 256
     boi_token_id: int | None = 255_999
     eoi_token_id: int | None = 262_144
