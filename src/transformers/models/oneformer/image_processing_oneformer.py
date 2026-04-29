@@ -43,7 +43,7 @@ from ...utils import (
 
 try:
     from huggingface_hub import hf_hub_download
-    from huggingface_hub.utils import RepositoryNotFoundError
+    from huggingface_hub.errors import RepositoryNotFoundError
 except ImportError:
     hf_hub_download = None
     RepositoryNotFoundError = None
