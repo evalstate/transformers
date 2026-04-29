@@ -113,6 +113,10 @@ The following auto classes are available for the following natural language proc
 
 [[autodoc]] AutoModelForMaskGeneration
 
+### AutoModelForPromptableConceptSegmentation
+
+[[autodoc]] AutoModelForPromptableConceptSegmentation
+
 ### AutoModelForPromptableVisualSegmentation
 
 [[autodoc]] AutoModelForPromptableVisualSegmentation

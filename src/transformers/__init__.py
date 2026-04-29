@@ -163,6 +163,7 @@ _import_structure = {
         "PipedPipelineDataFormat",
         "Pipeline",
         "PipelineDataFormat",
+        "PromptableConceptSegmentationPipeline",
         "PromptableVisualSegmentationPipeline",
         "TableQuestionAnsweringPipeline",
         "TextClassificationPipeline",
@@ -695,6 +696,7 @@ if TYPE_CHECKING:
     from .pipelines import PipedPipelineDataFormat as PipedPipelineDataFormat
     from .pipelines import Pipeline as Pipeline
     from .pipelines import PipelineDataFormat as PipelineDataFormat
+    from .pipelines import PromptableConceptSegmentationPipeline as PromptableConceptSegmentationPipeline
     from .pipelines import PromptableVisualSegmentationPipeline as PromptableVisualSegmentationPipeline
     from .pipelines import TableQuestionAnsweringPipeline as TableQuestionAnsweringPipeline
     from .pipelines import TextClassificationPipeline as TextClassificationPipeline

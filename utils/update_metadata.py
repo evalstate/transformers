@@ -84,6 +84,11 @@ PIPELINE_TAGS_AND_AUTO_MODELS = [
         "AutoModelForZeroShotObjectDetection",
     ),
     (
+        "promptable-concept-segmentation",
+        "MODEL_FOR_PROMPTABLE_CONCEPT_SEGMENTATION_MAPPING_NAMES",
+        "AutoModelForPromptableConceptSegmentation",
+    ),
+    (
         "promptable-visual-segmentation",
         "MODEL_FOR_PROMPTABLE_VISUAL_SEGMENTATION_MAPPING_NAMES",
         "AutoModelForPromptableVisualSegmentation",
