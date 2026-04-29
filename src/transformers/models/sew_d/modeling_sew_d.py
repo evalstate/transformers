@@ -28,6 +28,7 @@ from ...modeling_layers import GradientCheckpointingLayer
 from ...modeling_outputs import BaseModelOutput, CausalLMOutput, SequenceClassifierOutput
 from ...modeling_utils import PreTrainedModel, get_torch_context_manager_or_global_device
 from ...utils import auto_docstring, logging
+from ...utils.generic import _conv_out_length
 from .configuration_sew_d import SEWDConfig
 
 
@@ -1210,11 +1211,6 @@ class SEWDPreTrainedModel(PreTrainedModel):
         """
         Computes the output length of the convolutional layers
         """
-
-        def _conv_out_length(input_length, kernel_size, stride):
-            # 1D convolutional layer output length formula taken
-            # from https://pytorch.org/docs/stable/generated/torch.nn.Conv1d.html
-            return torch.div(input_length - kernel_size, stride, rounding_mode="floor") + 1
 
         for kernel_size, stride in zip(self.config.conv_kernel, self.config.conv_stride):
             input_lengths = _conv_out_length(input_lengths, kernel_size, stride)
